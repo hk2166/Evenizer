@@ -1,5 +1,5 @@
 # Class Diagram
 
-![Class Diagram Screenshot](class1.png)
+![Class Diagram Screenshot](class.png)
 
 
