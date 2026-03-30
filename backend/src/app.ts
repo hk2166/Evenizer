@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { healthRouter } from "./routes/health.route.js";
 import { bookingRouter } from "./routes/booking.route.js";
+import { eventRouter } from "./routes/event.route.js";
 
 export const app = express();
 
@@ -11,3 +12,4 @@ app.use(express.json());
 
 app.use("/health", healthRouter);
 app.use("/bookings", bookingRouter);
+app.use("/events", eventRouter);

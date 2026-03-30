@@ -1,9 +1,9 @@
 // backend/src/middleware/validate.ts
 import { Request, Response, NextFunction } from "express";
-import { AnyZodObject, ZodError } from "zod";
+import { ZodObject, ZodError } from "zod";
 
 export const validate =
-  (schema: AnyZodObject) =>
+  (schema: ZodObject<any>) =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
       schema.parse({
@@ -16,7 +16,7 @@ export const validate =
       if (error instanceof ZodError) {
         return res.status(400).json({
           message: "Input validation failed",
-          errors: error.errors,
+          errors: error.issues,
         });
       }
       // For other unexpected errors

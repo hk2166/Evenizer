@@ -5,6 +5,7 @@ import { Event } from "../models/Event";
 import { User } from "../models/User";
 import { Payment } from "../models/Payment";
 import { Customer } from "../models/Customer";
+import { Organizer } from "../models/Organizer";
 
 // In-memory data stores
 export const db = {
@@ -16,7 +17,11 @@ export const db = {
 };
 
 // Add some initial data for testing
-db.users.set("c1", new Customer("c1", "Test", "t@t.com", "p"));
+const TEST_CUSTOMER_ID = "550e8400-e29b-41d4-a716-446655440001";
+const TEST_ORGANIZER_ID = "550e8400-e29b-41d4-a716-446655440002";
+
+db.users.set(TEST_CUSTOMER_ID, new Customer(TEST_CUSTOMER_ID, "Test Customer", "customer@test.com", "password123"));
+db.users.set(TEST_ORGANIZER_ID, new Organizer(TEST_ORGANIZER_ID, "Test Organizer", "organizer@test.com", "password123"));
 db.ticketCategories.set(
   "t1",
   new TicketCategory("t1", "VIP", 100, "Type", 50, 50),

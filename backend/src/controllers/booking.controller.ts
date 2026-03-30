@@ -1,7 +1,7 @@
 // backend/src/controllers/booking.controller.ts
 import { Request, Response } from "express";
-import { BookingService } from "../services/booking.service";
-import { CreateBookingInput } from "../schemas/booking.schema";
+import { BookingService } from "../services/booking.service.js";
+import { CreateBookingInput } from "../validation/booking.validation.js";
 
 export const createBookingHandler = async (
   req: Request<{}, {}, CreateBookingInput>,

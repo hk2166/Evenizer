@@ -31,11 +31,10 @@ export class EventService {
       eventDate
     );
 
-    // 4. Save to database
-    MockRepository.save(db.events, newEvent); // ✅ With semicolon
-return { event: newEvent };
 
-    // 5. Return the created event
+    MockRepository.save(db.events, newEvent); 
     return { event: newEvent };
+
+    
   }
 }

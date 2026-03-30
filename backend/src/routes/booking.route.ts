@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { createBookingHandler } from "../controllers/booking.controller";
-import { validate } from "../middleware/validate";
-import { createBookingSchema } from "../schemas/booking.schema";
+import { createBookingHandler } from "../controllers/booking.controller.js";
+import { validate } from "../middleware/validate.js";
+import { createBookingSchema } from "../validation/booking.validation.js";
 
 export const bookingRouter = Router();
 

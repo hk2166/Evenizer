@@ -37,12 +37,6 @@ const ticketCategorySchema = new Schema<ITicketCategoryDocument>(
       type: Number,
       required: [true, "Available seats is required"],
       min: [0, "Available seats cannot be negative"],
-      validate: {
-        validator: function (value: number) {
-          return value <= this.totalSeats;
-        },
-        message: "Available seats cannot exceed total seats",
-      },
     },
     eventId: {
       type: Schema.Types.ObjectId,
