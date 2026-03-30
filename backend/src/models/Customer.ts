@@ -1,8 +1,9 @@
+import { UserRole } from "./enum";
 import { User } from "./User";
 
 export class Customer extends User {
   constructor(id: string, name: string, email: string, password: string) {
-    super(id, name, email, password, "customer");
+    super(id, name, email, password, UserRole.CUSTOMER);
   }
 
   login(): Promise<boolean> {

@@ -1,17 +1,19 @@
+import { UserRole } from "./enum";
+
 // Abstract User class
 export abstract class User {
   id: string;
   name: string;
   email: string;
   password: string;
-  role: string;
+  role: UserRole;
 
   constructor(
     id: string,
     name: string,
     email: string,
     password: string,
-    role: string,
+    role: UserRole,
   ) {
     this.id = id;
     this.name = name;

@@ -1,9 +1,11 @@
+import { EventStatus } from "./enum";
+
 export class Event {
   id: string;
   title: string;
   description: string;
   location: string;
-  status: string;
+  status: EventStatus;
   date: Date;
 
   constructor(
@@ -11,7 +13,7 @@ export class Event {
     title: string,
     description: string,
     location: string,
-    status: string,
+    status: EventStatus,
     date: Date,
   ) {
     this.id = id;
@@ -23,11 +25,11 @@ export class Event {
   }
 
   publishEvent(): void {
-    // Logic to publish event
+    this.status = EventStatus.PUBLISHED;
   }
 
   cancelEvent(): void {
-    // Logic to cancel event
+    this.status = EventStatus.CANCELLED;
   }
 
   updateEvent(): void {

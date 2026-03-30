@@ -1,8 +1,9 @@
+import { UserRole } from "./enum";
 import { User } from "./User";
 
 export class Admin extends User {
   constructor(id: string, name: string, email: string, password: string) {
-    super(id, name, email, password, "admin");
+    super(id, name, email, password, UserRole.ADMIN);
   }
 
   login(): Promise<boolean> {

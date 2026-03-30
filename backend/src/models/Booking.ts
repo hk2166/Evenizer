@@ -1,15 +1,17 @@
+import { BookingStatus } from "./enum";
+
 export class Booking {
   id: string;
   quantity: number;
   totalAmount: number;
-  status: string;
+  status: BookingStatus;
   bookingDate: Date;
 
   constructor(
     id: string,
     quantity: number,
     totalAmount: number,
-    status: string,
+    status: BookingStatus,
     bookingDate: Date,
   ) {
     this.id = id;
@@ -19,13 +21,31 @@ export class Booking {
     this.bookingDate = bookingDate;
   }
 
+  markPaid(): void {
+    if (this.status !== BookingStatus.RESERVED) {
+      throw new Error("Invalid booking status transition");
+    }
+    this.status = BookingStatus.PAID;
+  }
+
   confirmBooking(): void {
-    // Logic to confirm booking
-    this.status = "confirmed";
+    if (this.status !== BookingStatus.PAID) {
+      throw new Error("Invalid booking status transition");
+    }
+    this.status = BookingStatus.CONFIRMED;
   }
 
   cancelBooking(): void {
-    // Logic to cancel booking
-    this.status = "cancelled";
+    if (this.status === BookingStatus.CONFIRMED) {
+      throw new Error("Invalid booking status transition");
+    }
+    this.status = BookingStatus.CANCELLED;
+  }
+
+  expireBooking(): void {
+    if (this.status !== BookingStatus.RESERVED) {
+      throw new Error("Invalid booking status transition");
+    }
+    this.status = BookingStatus.EXPIRED;
   }
 }

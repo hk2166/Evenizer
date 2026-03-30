@@ -22,18 +22,22 @@ export class TicketCategory {
     this.availableSeats = availableSeats;
   }
 
-  reserveSeat(): boolean {
-    // Logic to reserve a seat
-    if (this.availableSeats > 0) {
-      this.availableSeats--;
-      return true;
+  reserveSeat(quantity: number): boolean {
+    if (quantity <= 0) {
+      return false;
     }
-    return false;
+    if (this.availableSeats < quantity) {
+      return false;
+    }
+    this.availableSeats -= quantity;
+    return true;
   }
 
-  releaseSeat(): void {
-    // Logic to release a seat
-    this.availableSeats++;
+  releaseSeat(quantity: number): void {
+    if (quantity <= 0) {
+      return;
+    }
+    this.availableSeats += quantity;
   }
 
   updatePrice(newPrice: number): void {

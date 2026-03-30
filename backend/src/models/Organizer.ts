@@ -1,8 +1,9 @@
+import { UserRole } from "./enum";
 import { User } from "./User";
 
 export class Organizer extends User {
   constructor(id: string, name: string, email: string, password: string) {
-    super(id, name, email, password, "organizer");
+    super(id, name, email, password, UserRole.ORGANIZER);
   }
 
   login(): Promise<boolean> {
