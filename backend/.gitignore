@@ -1,0 +1,6 @@
+.env
+.env.ts
+node_modules/
+dist/
+.src/config/env.ts
+src/config/env.ts
