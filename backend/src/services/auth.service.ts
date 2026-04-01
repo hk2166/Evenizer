@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import { UserRole } from "../models/enum.js";
 import { Customer } from "../models/Customer.js";
@@ -7,15 +7,33 @@ import { Organizer } from "../models/Organizer.js";
 import { db, MockRepository } from "../repositories/mock.repository.js";
 import { env } from "../config/env.js";
 
+type AuthSuccess = {
+  token: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: UserRole;
+  };
+};
+
+type AuthError = {
+  error: string;
+};
+
+type AuthResponse = AuthSuccess | AuthError;
+
 export class AuthService {
   static async register(
     name: string,
     email: string,
     password: string,
-    role: UserRole
-  ): Promise<{ token: string; user: any } | { error: string }> {
+    role: UserRole,
+  ): Promise<AuthResponse> {
+    const normalizedEmail = email.toLowerCase().trim();
+
     const existingUser = Array.from(db.users.values()).find(
-      (u) => u.email === email
+      (u) => u.email === normalizedEmail,
     );
 
     if (existingUser) {
@@ -24,9 +42,15 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = role === UserRole.CUSTOMER
-      ? new Customer(uuidv4(), name, email, hashedPassword)
-      : new Organizer(uuidv4(), name, email, hashedPassword);
+    let newUser;
+
+    if (role === UserRole.CUSTOMER) {
+      newUser = new Customer(uuidv4(), name, normalizedEmail, hashedPassword);
+    } else if (role === UserRole.ORGANIZER) {
+      newUser = new Organizer(uuidv4(), name, normalizedEmail, hashedPassword);
+    } else {
+      return { error: "Invalid user role" }; // ✅ safety check
+    }
 
     MockRepository.save(db.users, newUser);
 
@@ -43,12 +67,11 @@ export class AuthService {
     };
   }
 
-  static async login(
-    email: string,
-    password: string
-  ): Promise<{ token: string; user: any } | { error: string }> {
+  static async login(email: string, password: string): Promise<AuthResponse> {
+    const normalizedEmail = email.toLowerCase().trim();
+
     const user = Array.from(db.users.values()).find(
-      (u) => u.email === email
+      (u) => u.email === normalizedEmail,
     );
 
     if (!user) {
@@ -77,12 +100,14 @@ export class AuthService {
   private static generateToken(
     userId: string,
     email: string,
-    role: UserRole
+    role: UserRole,
   ): string {
     return jwt.sign(
       { userId, email, role },
       env.jwtSecret as string,
-      { expiresIn: env.jwtExpiresIn } as jwt.SignOptions
+      {
+        expiresIn: env.jwtExpiresIn,
+      } as SignOptions,
     );
   }
 }

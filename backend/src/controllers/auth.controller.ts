@@ -3,7 +3,9 @@ import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service.js";
 import { RegisterInput, LoginInput } from "../validation/auth.validation.js";
 
-
+/**
+ * Handle user registration
+ */
 export const registerHandler = async (
   req: Request<{}, {}, RegisterInput>,
   res: Response
@@ -26,27 +28,39 @@ export const registerHandler = async (
   });
 };
 
-
+/**
+ * Handle user login
+ */
 export const loginHandler = async (
   req: Request<{}, {}, LoginInput>,
   res: Response
 ) => {
-  
   const { email, password } = req.body;
 
-  
   const result = await AuthService.login(email, password);
 
-  
   if ("error" in result) {
-    
     return res.status(401).json({ message: result.error });
   }
 
-  
   return res.status(200).json({
     message: "Login successful",
     token: result.token,
     user: result.user,
+  });
+};
+
+/**
+ * Get current user info
+ * This is a protected route - requires authentication
+ * The authMiddleware must run before this handler
+ */
+export const getCurrentUserHandler = async (
+  req: Request,
+  res: Response
+) => {
+  return res.status(200).json({
+    message: "User retrieved successfully",
+    user: req.user,
   });
 };
