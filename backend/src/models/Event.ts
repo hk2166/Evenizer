@@ -7,6 +7,7 @@ export class Event {
   location: string;
   status: EventStatus;
   date: Date;
+  organizerId: string;
 
   constructor(
     id: string,
@@ -15,6 +16,7 @@ export class Event {
     location: string,
     status: EventStatus,
     date: Date,
+    organizerId: string
   ) {
     this.id = id;
     this.title = title;
@@ -22,6 +24,7 @@ export class Event {
     this.location = location;
     this.status = status;
     this.date = date;
+    this.organizerId = organizerId;
   }
 
   publishEvent(): void {
