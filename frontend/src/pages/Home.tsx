@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { eventAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import type { Event } from '../types';
@@ -11,6 +12,7 @@ export default function Home() {
   const [error, setError] = useState('');
 
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Fetch events on mount
   useEffect(() => {
@@ -57,7 +59,12 @@ export default function Home() {
                   <p>📍 {event.location}</p>
                   <p>📅 {new Date(event.date).toLocaleDateString()}</p>
                 </div>
-                <button className="btn-view">View Details</button>
+                <button 
+                  className="btn-view"
+                  onClick={() => navigate(`/events/${event.id}`)}
+                >
+                  View Details
+                </button>
               </div>
             ))}
           </div>
