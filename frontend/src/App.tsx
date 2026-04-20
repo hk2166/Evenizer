@@ -11,21 +11,30 @@ import MyBookings from "./pages/MyBookings";
 import CreateEventFAB from "./components/CreateEventFAB";
 import "./index.css";
 
+function MainLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <Navbar />
+      {children}
+      <CreateEventFAB />
+    </>
+  );
+}
+
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Navbar />
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/my-events" element={<MyEvents />} />
-          <Route path="/events/create" element={<CreateEvent />} />
-          <Route path="/events/:id" element={<EventDetails />} />
-          <Route path="/bookings" element={<MyBookings />} />
+          <Route path="/" element={<MainLayout><Home /></MainLayout>} />
+          <Route path="/login" element={<MainLayout><Login /></MainLayout>} />
+          <Route path="/register" element={<MainLayout><Register /></MainLayout>} />
+          <Route path="/my-events" element={<MainLayout><MyEvents /></MainLayout>} />
+          <Route path="/events/create" element={<MainLayout><CreateEvent /></MainLayout>} />
+          <Route path="/events/:id" element={<MainLayout><EventDetails /></MainLayout>} />
+          <Route path="/bookings" element={<MainLayout><MyBookings /></MainLayout>} />
+          <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
-        <CreateEventFAB />
       </BrowserRouter>
     </AuthProvider>
   );

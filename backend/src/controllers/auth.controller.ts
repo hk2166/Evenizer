@@ -2,13 +2,14 @@
 import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service.js";
 import { RegisterInput, LoginInput } from "../validation/auth.validation.js";
+import { db } from "../repositories/mock.repository.js";
 
 /**
  * Handle user registration
  */
 export const registerHandler = async (
   req: Request<{}, {}, RegisterInput>,
-  res: Response
+  res: Response,
 ) => {
   const { name, email, password, role } = req.body;
 
@@ -33,7 +34,7 @@ export const registerHandler = async (
  */
 export const loginHandler = async (
   req: Request<{}, {}, LoginInput>,
-  res: Response
+  res: Response,
 ) => {
   const { email, password } = req.body;
 
@@ -55,18 +56,19 @@ export const loginHandler = async (
  * This is a protected route - requires authentication
  * The authMiddleware must run before this handler
  */
-export const getCurrentUserHandler = async (
-  req: Request,
-  res: Response
-) => {
-  // req.user comes from JWT and has {userId, email, role}
-  // We need to return it in a consistent format
+export const getCurrentUserHandler = async (req: Request, res: Response) => {
   const jwtUser = req.user!;
-  
+  const user = db.users.get(jwtUser.userId);
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
   return res.status(200).json({
     message: "User retrieved successfully",
     user: {
       userId: jwtUser.userId,
+      name: user.name,
       email: jwtUser.email,
       role: jwtUser.role,
     },

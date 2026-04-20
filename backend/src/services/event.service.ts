@@ -67,7 +67,7 @@ export class EventService {
       );
 
       // Create ticket categories if provided
-      if (ticketCategories && ticketCategories.length > 0) {
+      if (ticketCategories && Array.isArray(ticketCategories) && ticketCategories.length > 0) {
         const categoryDocs = await TicketCategoryModel.create(
           ticketCategories.map((cat) => ({
             title: cat.title,

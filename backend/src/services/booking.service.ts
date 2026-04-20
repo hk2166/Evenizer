@@ -324,8 +324,9 @@ export class BookingService {
         );
 
         await session.commitTransaction();
+        session.endSession();
 
-        // Reload payment with updated status
+        // Reload payment with updated status (outside transaction)
         const updatedPayment = await PaymentService.updatePaymentStatus(
           payment._id.toString(),
           PaymentStatus.SUCCESS,
@@ -358,14 +359,16 @@ export class BookingService {
         );
 
         await session.commitTransaction();
+        session.endSession();
 
         throw new PaymentError("Payment failed");
       }
     } catch (error) {
-      await session.abortTransaction();
-      throw error;
-    } finally {
+      if (session.inTransaction()) {
+        await session.abortTransaction();
+      }
       session.endSession();
+      throw error;
     }
   }
 

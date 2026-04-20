@@ -1,16 +1,35 @@
 import { Request, Response } from "express";
-import { EventService, ValidationError, NotFoundError, ForbiddenError } from "../services/event.service.js";
-import { CreateEventInput, EventIdParams, UpdateEventInput } from "../validation/event.validation.js";
+import {
+  EventService,
+  ValidationError,
+  NotFoundError,
+  ForbiddenError,
+} from "../services/event.service.js";
+import {
+  CreateEventInput,
+  EventIdParams,
+  UpdateEventInput,
+} from "../validation/event.validation.js";
+
+type CreateEventBody = CreateEventInput & {
+  ticketCategories?: {
+    title: string;
+    price: number;
+    type: string;
+    totalSeats: number;
+  }[];
+};
 
 /**
  * POST /events - Create event
  */
 export const createEventHandler = async (
-  req: Request<{}, {}, CreateEventInput>,
-  res: Response
+  req: Request<{}, {}, CreateEventBody>,
+  res: Response,
 ) => {
   try {
-    const { title, description, date, location, organizerId, ticketCategories } = req.body as any;
+    const { title, description, date, location, ticketCategories } = req.body;
+    const organizerId = req.user!.userId;
 
     const event = await EventService.createEvent(
       title,
@@ -18,7 +37,7 @@ export const createEventHandler = async (
       date,
       location,
       organizerId,
-      ticketCategories
+      ticketCategories,
     );
 
     return res.status(201).json({
@@ -78,7 +97,7 @@ export const getAllEventsHandler = async (req: Request, res: Response) => {
  */
 export const getEventByIdHandler = async (
   req: Request<EventIdParams>,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.params;
@@ -116,7 +135,7 @@ export const getEventByIdHandler = async (
  */
 export const updateEventHandler = async (
   req: Request<EventIdParams, {}, UpdateEventInput["body"]>,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.params;
@@ -158,7 +177,7 @@ export const updateEventHandler = async (
  */
 export const deleteEventHandler = async (
   req: Request<EventIdParams>,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.params;
@@ -190,7 +209,7 @@ export const deleteEventHandler = async (
  */
 export const publishEventHandler = async (
   req: Request<EventIdParams>,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.params;
@@ -227,7 +246,7 @@ export const publishEventHandler = async (
  */
 export const addTicketCategoryHandler = async (
   req: Request<EventIdParams>,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { id } = req.params;
@@ -238,7 +257,11 @@ export const addTicketCategoryHandler = async (
       return res.status(400).json({ message: "Invalid event ID" });
     }
 
-    const category = await EventService.addTicketCategory(id, organizerId, categoryData);
+    const category = await EventService.addTicketCategory(
+      id,
+      organizerId,
+      categoryData,
+    );
 
     return res.status(201).json({
       message: "Ticket category added successfully",
@@ -268,10 +291,16 @@ export const addTicketCategoryHandler = async (
  */
 export const getOrganizerEventsHandler = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { organizerId } = req.params;
+
+    if (req.user!.userId !== organizerId) {
+      return res
+        .status(403)
+        .json({ message: "You can only view your own events" });
+    }
 
     if (!organizerId || Array.isArray(organizerId)) {
       return res.status(400).json({ message: "Invalid organizer ID" });

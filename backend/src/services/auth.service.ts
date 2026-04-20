@@ -59,7 +59,7 @@ export class AuthService {
     return {
       token,
       user: {
-        userId: newUser.id,  // Return as userId for consistency
+        userId: newUser.id, // Return as userId for consistency
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
@@ -89,7 +89,7 @@ export class AuthService {
     return {
       token,
       user: {
-        userId: user.id,  // Return as userId for consistency
+        userId: user.id, // Return as userId for consistency
         name: user.name,
         email: user.email,
         role: user.role,
@@ -102,12 +102,8 @@ export class AuthService {
     email: string,
     role: UserRole,
   ): string {
-    return jwt.sign(
-      { userId, email, role },
-      env.jwtSecret as string,
-      {
-        expiresIn: env.jwtExpiresIn,
-      } as SignOptions,
-    );
+    return jwt.sign({ userId, email, role }, env.jwtSecret, {
+      expiresIn: env.jwtExpiresIn,
+    } as SignOptions);
   }
 }
