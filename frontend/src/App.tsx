@@ -9,8 +9,8 @@ import CreateEvent from "./pages/CreateEvent";
 import MyEvents from "./pages/MyEvents";
 import MyBookings from "./pages/MyBookings";
 import CreateEventFAB from "./components/CreateEventFAB";
+import AdminDashboard from "./pages/AdminDashboard";
 import "./index.css";
-
 function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
