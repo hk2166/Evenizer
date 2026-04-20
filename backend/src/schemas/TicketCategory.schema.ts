@@ -6,6 +6,7 @@ export interface ITicketCategoryDocument extends Document {
   type: string;
   totalSeats: number;
   availableSeats: number;
+  reservedSeats: number;
   eventId: mongoose.Types.ObjectId; // Reference to Event
   createdAt: Date;
   updatedAt: Date;
@@ -37,6 +38,18 @@ const ticketCategorySchema = new Schema<ITicketCategoryDocument>(
       type: Number,
       required: [true, "Available seats is required"],
       min: [0, "Available seats cannot be negative"],
+      validate: {
+        validator: function(this: ITicketCategoryDocument, value: number) {
+          return value <= this.totalSeats;
+        },
+        message: "Available seats cannot exceed total seats",
+      },
+    },
+    reservedSeats: {
+      type: Number,
+      required: [true, "Reserved seats is required"],
+      default: 0,
+      min: [0, "Reserved seats cannot be negative"],
     },
     eventId: {
       type: Schema.Types.ObjectId,
@@ -51,6 +64,7 @@ const ticketCategorySchema = new Schema<ITicketCategoryDocument>(
 
 // Compound index for querying tickets by event
 ticketCategorySchema.index({ eventId: 1, type: 1 });
+ticketCategorySchema.index({ availableSeats: 1 }); // Availability queries
 
 export const TicketCategoryModel = mongoose.model<ITicketCategoryDocument>(
   "TicketCategory",

@@ -59,8 +59,16 @@ export const getCurrentUserHandler = async (
   req: Request,
   res: Response
 ) => {
+  // req.user comes from JWT and has {userId, email, role}
+  // We need to return it in a consistent format
+  const jwtUser = req.user!;
+  
   return res.status(200).json({
     message: "User retrieved successfully",
-    user: req.user,
+    user: {
+      userId: jwtUser.userId,
+      email: jwtUser.email,
+      role: jwtUser.role,
+    },
   });
 };

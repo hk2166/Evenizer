@@ -10,7 +10,7 @@ import { env } from "../config/env.js";
 type AuthSuccess = {
   token: string;
   user: {
-    id: string;
+    userId: string;
     name: string;
     email: string;
     role: UserRole;
@@ -59,7 +59,7 @@ export class AuthService {
     return {
       token,
       user: {
-        id: newUser.id,
+        userId: newUser.id,  // Return as userId for consistency
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
@@ -89,7 +89,7 @@ export class AuthService {
     return {
       token,
       user: {
-        id: user.id,
+        userId: user.id,  // Return as userId for consistency
         name: user.name,
         email: user.email,
         role: user.role,

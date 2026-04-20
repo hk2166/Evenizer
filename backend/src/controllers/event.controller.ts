@@ -1,146 +1,299 @@
-// backend/src/controllers/event.controller.ts
 import { Request, Response } from "express";
-import { EventService } from "../services/event.service.js";
-import { 
-  CreateEventInput, 
-  EventIdParams, 
-  UpdateEventInput 
-} from "../validation/event.validation.js";
+import { EventService, ValidationError, NotFoundError, ForbiddenError } from "../services/event.service.js";
+import { CreateEventInput, EventIdParams, UpdateEventInput } from "../validation/event.validation.js";
 
-
+/**
+ * POST /events - Create event
+ */
 export const createEventHandler = async (
   req: Request<{}, {}, CreateEventInput>,
   res: Response
 ) => {
-  const { title, description, date, location, organizerId } = req.body;
+  try {
+    const { title, description, date, location, organizerId, ticketCategories } = req.body as any;
 
-  const result = await EventService.createEvent(
-    title,
-    description,
-    date,
-    location,
-    organizerId
-  );
+    const event = await EventService.createEvent(
+      title,
+      description,
+      date,
+      location,
+      organizerId,
+      ticketCategories
+    );
 
-  if ("error" in result) {
-    if (result.error === "Organizer not found") {
-      return res.status(404).json({ message: result.error });
+    return res.status(201).json({
+      message: "Event created successfully",
+      event: {
+        id: event._id,
+        title: event.title,
+        description: event.description,
+        location: event.location,
+        status: event.status,
+        date: event.date,
+        organizerId: event.organizerId,
+        ticketCategories: event.ticketCategories,
+      },
+    });
+  } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({ message: error.message });
     }
-    return res.status(400).json({ message: result.error });
+    if (error instanceof NotFoundError) {
+      return res.status(404).json({ message: error.message });
+    }
+    console.error("Error creating event:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
-
-  return res.status(201).json({
-    message: "Event created successfully",
-    event: result.event,
-  });
 };
 
+/**
+ * GET /events - Get all published events
+ */
+export const getAllEventsHandler = async (req: Request, res: Response) => {
+  try {
+    const events = await EventService.getAllEvents();
 
-export const getAllEventsHandler = async (
-  req: Request,
-  res: Response
-) => {
-  
-  const result = await EventService.getAllEvents();
-
-  // Return events (always succeeds, might be empty array)
-  return res.status(200).json({
-    message: "Events retrieved successfully",
-    count: result.events.length,
-    events: result.events,
-  });
+    return res.status(200).json({
+      message: "Events retrieved successfully",
+      count: events.length,
+      events: events.map((event) => ({
+        id: event._id,
+        title: event.title,
+        description: event.description,
+        location: event.location,
+        status: event.status,
+        date: event.date,
+        organizerId: event.organizerId,
+        ticketCategories: event.ticketCategories,
+      })),
+    });
+  } catch (error: any) {
+    console.error("Error fetching events:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
 
-
+/**
+ * GET /events/:id - Get event by ID
+ */
 export const getEventByIdHandler = async (
   req: Request<EventIdParams>,
   res: Response
 ) => {
-  
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-  
-  const result = await EventService.getEventById(id);
+    if (!id || Array.isArray(id)) {
+      return res.status(400).json({ message: "Invalid event ID" });
+    }
 
-  
-  if ("error" in result) {
-    return res.status(404).json({ message: result.error });
+    const event = await EventService.getEventById(id);
+
+    return res.status(200).json({
+      message: "Event retrieved successfully",
+      event: {
+        id: event._id,
+        title: event.title,
+        description: event.description,
+        location: event.location,
+        status: event.status,
+        date: event.date,
+        organizerId: event.organizerId,
+        ticketCategories: event.ticketCategories,
+      },
+    });
+  } catch (error: any) {
+    if (error instanceof NotFoundError) {
+      return res.status(404).json({ message: error.message });
+    }
+    console.error("Error fetching event:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
-
-  
-  return res.status(200).json({
-    message: "Event retrieved successfully",
-    event: result.event,
-  });
 };
 
+/**
+ * PUT /events/:id - Update event
+ */
 export const updateEventHandler = async (
   req: Request<EventIdParams, {}, UpdateEventInput["body"]>,
   res: Response
 ) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    const organizerId = req.user!.userId;
 
-  const { id } = req.params;
-
-
-  const updates = req.body;
-
-
-  const organizerId = req.user!.userId;
-
-
-  const result = await EventService.updateEvent(id, organizerId, updates);
-
-
-  if ("error" in result) {
-
-    if (result.error === "Event not found") {
-      return res.status(404).json({ message: result.error });
+    if (!id || Array.isArray(id)) {
+      return res.status(400).json({ message: "Invalid event ID" });
     }
 
-    if (result.error.includes("not authorized")) {
-      return res.status(403).json({ message: result.error });
-    }
+    const event = await EventService.updateEvent(id, organizerId, updates);
 
-    return res.status(400).json({ message: result.error });
+    return res.status(200).json({
+      message: "Event updated successfully",
+      event: {
+        id: event._id,
+        title: event.title,
+        description: event.description,
+        location: event.location,
+        status: event.status,
+        date: event.date,
+        organizerId: event.organizerId,
+      },
+    });
+  } catch (error: any) {
+    if (error instanceof NotFoundError) {
+      return res.status(404).json({ message: error.message });
+    }
+    if (error instanceof ForbiddenError) {
+      return res.status(403).json({ message: error.message });
+    }
+    console.error("Error updating event:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
-
-
-  return res.status(200).json({
-    message: "Event updated successfully",
-    event: result.event,
-  });
 };
 
-
+/**
+ * DELETE /events/:id - Delete event
+ */
 export const deleteEventHandler = async (
   req: Request<EventIdParams>,
   res: Response
 ) => {
+  try {
+    const { id } = req.params;
+    const organizerId = req.user!.userId;
 
-  const { id } = req.params;
-
-
-  const organizerId = req.user!.userId;
-
-
-  const result = await EventService.deleteEvent(id, organizerId);
-
-
-  if ("error" in result) {
-
-    if (result.error === "Event not found") {
-      return res.status(404).json({ message: result.error });
+    if (!id || Array.isArray(id)) {
+      return res.status(400).json({ message: "Invalid event ID" });
     }
 
-    if (result.error.includes("not authorized")) {
-      return res.status(403).json({ message: result.error });
-    }
+    await EventService.deleteEvent(id, organizerId);
 
-    return res.status(400).json({ message: result.error });
+    return res.status(200).json({
+      message: "Event deleted successfully",
+    });
+  } catch (error: any) {
+    if (error instanceof NotFoundError) {
+      return res.status(404).json({ message: error.message });
+    }
+    if (error instanceof ForbiddenError) {
+      return res.status(403).json({ message: error.message });
+    }
+    console.error("Error deleting event:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
+};
 
+/**
+ * POST /events/:id/publish - Publish event
+ */
+export const publishEventHandler = async (
+  req: Request<EventIdParams>,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const organizerId = req.user!.userId;
 
-  return res.status(200).json({
-    message: "Event deleted successfully",
-  });
+    if (!id || Array.isArray(id)) {
+      return res.status(400).json({ message: "Invalid event ID" });
+    }
+
+    const event = await EventService.publishEvent(id, organizerId);
+
+    return res.status(200).json({
+      message: "Event published successfully",
+      event: {
+        id: event._id,
+        title: event.title,
+        status: event.status,
+      },
+    });
+  } catch (error: any) {
+    if (error instanceof NotFoundError) {
+      return res.status(404).json({ message: error.message });
+    }
+    if (error instanceof ForbiddenError) {
+      return res.status(403).json({ message: error.message });
+    }
+    console.error("Error publishing event:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+/**
+ * POST /events/:id/ticket-categories - Add ticket category
+ */
+export const addTicketCategoryHandler = async (
+  req: Request<EventIdParams>,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const organizerId = req.user!.userId;
+    const categoryData = req.body;
+
+    if (!id || Array.isArray(id)) {
+      return res.status(400).json({ message: "Invalid event ID" });
+    }
+
+    const category = await EventService.addTicketCategory(id, organizerId, categoryData);
+
+    return res.status(201).json({
+      message: "Ticket category added successfully",
+      category: {
+        id: category._id,
+        title: category.title,
+        price: category.price,
+        type: category.type,
+        totalSeats: category.totalSeats,
+        availableSeats: category.availableSeats,
+      },
+    });
+  } catch (error: any) {
+    if (error instanceof NotFoundError) {
+      return res.status(404).json({ message: error.message });
+    }
+    if (error instanceof ForbiddenError) {
+      return res.status(403).json({ message: error.message });
+    }
+    console.error("Error adding ticket category:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+/**
+ * GET /events/organizer/:organizerId - Get organizer's events
+ */
+export const getOrganizerEventsHandler = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { organizerId } = req.params;
+
+    if (!organizerId || Array.isArray(organizerId)) {
+      return res.status(400).json({ message: "Invalid organizer ID" });
+    }
+
+    const events = await EventService.getOrganizerEvents(organizerId);
+
+    return res.status(200).json({
+      message: "Organizer events retrieved successfully",
+      count: events.length,
+      events: events.map((event) => ({
+        id: event._id,
+        title: event.title,
+        description: event.description,
+        location: event.location,
+        status: event.status,
+        date: event.date,
+        ticketCategories: event.ticketCategories,
+      })),
+    });
+  } catch (error: any) {
+    console.error("Error fetching organizer events:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };

@@ -6,6 +6,9 @@ import {
   getEventByIdHandler,
   updateEventHandler,
   deleteEventHandler,
+  publishEventHandler,
+  addTicketCategoryHandler,
+  getOrganizerEventsHandler,
 } from "../controllers/event.controller.js";
 import { validate } from "../middleware/validate.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
@@ -79,4 +82,44 @@ eventRouter.delete(
   authMiddleware,
   validate(eventIdSchema),
   deleteEventHandler
+);
+
+/**
+ * POST /events/:id/publish
+ * Publish an event (make it visible to customers)
+ * 1. authMiddleware - Verify user is logged in
+ * 2. validate - Check :id is valid
+ * 3. publishEventHandler - Publish the event (checks ownership)
+ */
+eventRouter.post(
+  "/:id/publish",
+  authMiddleware,
+  validate(eventIdSchema),
+  publishEventHandler
+);
+
+/**
+ * POST /events/:id/ticket-categories
+ * Add a ticket category to an existing event
+ * 1. authMiddleware - Verify user is logged in
+ * 2. validate - Check :id is valid
+ * 3. addTicketCategoryHandler - Add ticket category (checks ownership)
+ */
+eventRouter.post(
+  "/:id/ticket-categories",
+  authMiddleware,
+  validate(eventIdSchema),
+  addTicketCategoryHandler
+);
+
+/**
+ * GET /events/organizer/:organizerId
+ * Get all events for a specific organizer
+ * 1. authMiddleware - Verify user is logged in
+ * 2. getOrganizerEventsHandler - Retrieve organizer's events
+ */
+eventRouter.get(
+  "/organizer/:organizerId",
+  authMiddleware,
+  getOrganizerEventsHandler
 );

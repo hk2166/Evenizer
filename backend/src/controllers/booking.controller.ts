@@ -1,31 +1,210 @@
-// backend/src/controllers/booking.controller.ts
 import { Request, Response } from "express";
-import { BookingService } from "../services/booking.service.js";
-import { CreateBookingInput } from "../validation/booking.validation.js";
+import { BookingService, ValidationError, NotFoundError, ConflictError, ForbiddenError, PaymentError } from "../services/booking.service.js";
+import { BookingStatus, PaymentMethod } from "../models/enum.js";
 
-export const createBookingHandler = async (
-  req: Request<{}, {}, CreateBookingInput>,
-  res: Response,
-) => {
-  const { customerId, ticketCategoryId, quantity } = req.body;
+/**
+ * POST /bookings - Create a new booking
+ */
+export const createBookingHandler = async (req: Request, res: Response) => {
+  try {
+    const { eventId, ticketCategoryId, quantity } = req.body;
+    const customerId = req.user?.userId; // From auth middleware
 
-  // The service remains the same
-  const result = await BookingService.createBooking(
-    customerId,
-    ticketCategoryId,
-    quantity,
-  );
-
-  if ("error" in result) {
-    // The service can return specific errors
-    if (result.error === "Not enough available seats.") {
-      return res.status(409).json({ message: result.error }); // 409 Conflict
+    if (!customerId) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
-    return res.status(400).json({ message: result.error });
-  }
 
-  res.status(201).json({
-    message: "Booking created successfully",
-    booking: result.booking,
-  });
+    const booking = await BookingService.createBooking(
+      customerId,
+      eventId,
+      ticketCategoryId,
+      quantity
+    );
+
+    res.status(201).json({
+      message: "Booking created successfully",
+      booking,
+    });
+  } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({ error: error.message });
+    }
+    if (error instanceof NotFoundError) {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error instanceof ConflictError) {
+      return res.status(409).json({ error: error.message });
+    }
+    console.error("Error creating booking:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+/**
+ * POST /bookings/:id/payment - Process payment for a booking
+ */
+export const processPaymentHandler = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { paymentMethod } = req.body;
+    const customerId = req.user?.userId; // From auth middleware
+
+    if (!customerId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    if (!id || Array.isArray(id)) {
+      return res.status(400).json({ error: "Invalid booking ID" });
+    }
+
+    if (!Object.values(PaymentMethod).includes(paymentMethod)) {
+      return res.status(400).json({ error: "Invalid payment method" });
+    }
+
+    const result = await BookingService.processPayment(
+      id,
+      customerId,
+      paymentMethod
+    );
+
+    res.status(200).json({
+      message: "Payment processed successfully",
+      booking: result.booking,
+      payment: result.payment,
+    });
+  } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({ error: error.message });
+    }
+    if (error instanceof NotFoundError) {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error instanceof ForbiddenError) {
+      return res.status(403).json({ error: error.message });
+    }
+    if (error instanceof PaymentError) {
+      return res.status(402).json({ error: error.message });
+    }
+    console.error("Error processing payment:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+/**
+ * POST /bookings/:id/cancel - Cancel a booking
+ */
+export const cancelBookingHandler = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const customerId = req.user?.userId; // From auth middleware
+
+    if (!customerId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    if (!id || Array.isArray(id)) {
+      return res.status(400).json({ error: "Invalid booking ID" });
+    }
+
+    const booking = await BookingService.cancelBooking(id, customerId);
+
+    res.status(200).json({
+      message: "Booking cancelled successfully",
+      booking,
+    });
+  } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({ error: error.message });
+    }
+    if (error instanceof NotFoundError) {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error instanceof ForbiddenError) {
+      return res.status(403).json({ error: error.message });
+    }
+    console.error("Error cancelling booking:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+/**
+ * GET /bookings/customer/:customerId - Get customer bookings
+ */
+export const getCustomerBookingsHandler = async (req: Request, res: Response) => {
+  try {
+    const { customerId } = req.params;
+    const { status } = req.query;
+
+    if (!customerId || Array.isArray(customerId)) {
+      return res.status(400).json({ error: "Invalid customer ID" });
+    }
+
+    const bookingStatus = status ? (status as BookingStatus) : undefined;
+
+    const bookings = await BookingService.getCustomerBookings(
+      customerId,
+      bookingStatus
+    );
+
+    res.status(200).json({
+      bookings,
+      count: bookings.length,
+    });
+  } catch (error: any) {
+    console.error("Error fetching customer bookings:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+/**
+ * GET /bookings/event/:eventId - Get event bookings (for organizers)
+ */
+export const getEventBookingsHandler = async (req: Request, res: Response) => {
+  try {
+    const { eventId } = req.params;
+    const { status } = req.query;
+
+    if (!eventId || Array.isArray(eventId)) {
+      return res.status(400).json({ error: "Invalid event ID" });
+    }
+
+    // TODO: Add authorization check - only event organizer should access this
+    const bookingStatus = status ? (status as BookingStatus) : undefined;
+
+    const bookings = await BookingService.getEventBookings(
+      eventId,
+      bookingStatus
+    );
+
+    res.status(200).json({
+      bookings,
+      count: bookings.length,
+    });
+  } catch (error: any) {
+    console.error("Error fetching event bookings:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+/**
+ * GET /bookings/:id - Get booking by ID
+ */
+export const getBookingByIdHandler = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!id || Array.isArray(id)) {
+      return res.status(400).json({ error: "Invalid booking ID" });
+    }
+
+    const booking = await BookingService.getBookingById(id);
+
+    res.status(200).json({ booking });
+  } catch (error: any) {
+    if (error instanceof NotFoundError) {
+      return res.status(404).json({ error: error.message });
+    }
+    console.error("Error fetching booking:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };

@@ -65,4 +65,23 @@ export const eventsAPI = {
   },
 };
 
+
+export const eventAPI = {
+  getAllEvents: async () => {
+    const response = await api.get('/events');
+    return response.data;
+  },
+
+  getEventById: async (id: string) => {
+    const response = await api.get(`/events/${id}`);
+    return response.data;
+  },
+
+  createEvent: async (eventData: any) => {
+    const response = await api.post('/events', eventData);
+    return response.data;
+  },
+};
+
+
 export default api;

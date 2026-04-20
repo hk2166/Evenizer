@@ -1,0 +1,50 @@
+/* Floating Action Button */
+.fab {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.5);
+  cursor: pointer;
+  z-index: 999;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fab:hover {
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.7);
+}
+
+.fab:active {
+  transform: scale(1.05) rotate(90deg);
+}
+
+.fab-icon {
+  font-size: 32px;
+  color: white;
+  font-weight: 300;
+  line-height: 1;
+  margin-bottom: 6px;
+  scale: 1.5;
+}
+
+@media (max-width: 768px) {
+  .fab {
+    width: 56px;
+    height: 56px;
+    bottom: 24px;
+    right: 24px;
+  }
+  
+  .fab-icon {
+    font-size: 28px;
+  }
+}

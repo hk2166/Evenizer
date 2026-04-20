@@ -1,8 +1,8 @@
 // frontend/src/types/index.ts
 
 export interface User {
-  id: string;
-  name: string;
+  userId: string;
+  name?: string;
   email: string;
   role: 'customer' | 'organizer' | 'admin';
 }

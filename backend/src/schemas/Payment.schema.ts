@@ -7,6 +7,7 @@ export interface IPaymentDocument extends Document {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   transactionId?: string; // External payment gateway transaction ID
+  processedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,6 +38,9 @@ const paymentSchema = new Schema<IPaymentDocument>(
     transactionId: {
       type: String,
       sparse: true, // Allows multiple null values but unique non-null values
+    },
+    processedAt: {
+      type: Date,
     },
   },
   {
