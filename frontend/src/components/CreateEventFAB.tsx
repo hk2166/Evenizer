@@ -6,8 +6,8 @@ export default function CreateEventFAB() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Don't show if user is not logged in
-  if (!user) return null;
+  // Don't show if user is not logged in or not an organizer/admin
+  if (!user || (user.role !== 'organizer' && user.role !== 'admin')) return null;
 
   return (
     <button 

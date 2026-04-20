@@ -1,15 +1,15 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { eventAPI } from '../services/api';
-import { useAuth } from '../context/AuthContext';
-import type { Event } from '../types';
-import '../styles/Home.css';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { eventAPI } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import type { Event } from "../types";
+import "../styles/Home.css";
 
 export default function Home() {
   // State
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -20,8 +20,8 @@ export default function Home() {
       try {
         const data = await eventAPI.getAllEvents();
         setEvents(data.events || []);
-      } catch (err: any) {
-        setError('Failed to load events');
+      } catch {
+        setError("Failed to load events");
       } finally {
         setLoading(false);
       }
@@ -46,7 +46,7 @@ export default function Home() {
 
       <div className="events-container">
         <h2>Upcoming Events</h2>
-        
+
         {events.length === 0 ? (
           <p className="no-events">No events available at the moment.</p>
         ) : (
@@ -59,7 +59,7 @@ export default function Home() {
                   <p>📍 {event.location}</p>
                   <p>📅 {new Date(event.date).toLocaleDateString()}</p>
                 </div>
-                <button 
+                <button
                   className="btn-view"
                   onClick={() => navigate(`/events/${event.id}`)}
                 >

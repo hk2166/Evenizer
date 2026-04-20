@@ -1,13 +1,14 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import '../styles/Auth.css';
+import { useState } from "react";
+import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import "../styles/Auth.css";
 
 export default function Login() {
   // State for form inputs
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   // Hooks
@@ -17,14 +18,18 @@ export default function Login() {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
       await login(email, password);
-      navigate('/'); 
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      navigate("/");
+    } catch (error: unknown) {
+      const message = axios.isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined;
+
+      setError(message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -35,7 +40,9 @@ export default function Login() {
       <div className="auth-container">
         <div className="auth-card">
           <h2>Login to EventHub</h2>
-          <p className="auth-subtitle">Welcome back! Please login to your account.</p>
+          <p className="auth-subtitle">
+            Welcome back! Please login to your account.
+          </p>
 
           {error && <div className="error-message">{error}</div>}
 
@@ -67,7 +74,7 @@ export default function Login() {
             </div>
 
             <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? "Logging in..." : "Login"}
             </button>
           </form>
 

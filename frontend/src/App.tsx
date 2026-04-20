@@ -1,13 +1,15 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import EventDetails from './pages/EventDetails';
-import CreateEvent from './pages/CreateEvent';
-import CreateEventFAB from './components/CreateEventFAB';
-import './index.css';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import EventDetails from "./pages/EventDetails";
+import CreateEvent from "./pages/CreateEvent";
+import MyEvents from "./pages/MyEvents";
+import MyBookings from "./pages/MyBookings";
+import CreateEventFAB from "./components/CreateEventFAB";
+import "./index.css";
 
 function App() {
   return (
@@ -18,8 +20,10 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/my-events" element={<MyEvents />} />
           <Route path="/events/create" element={<CreateEvent />} />
           <Route path="/events/:id" element={<EventDetails />} />
+          <Route path="/bookings" element={<MyBookings />} />
         </Routes>
         <CreateEventFAB />
       </BrowserRouter>

@@ -1,27 +1,27 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import '../styles/Auth.css';
+import { useState } from "react";
+import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import "../styles/Auth.css";
 
 export default function Register() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<'customer' | 'organizer'>('customer');
-  const [error, setError] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState<"customer" | "organizer">("customer");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  
   const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
 
@@ -29,9 +29,13 @@ export default function Register() {
 
     try {
       await register({ name, email, password, confirmPassword, role });
-      navigate('/'); // Redirect to home on success
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      navigate("/"); // Redirect to home on success
+    } catch (error: unknown) {
+      const message = axios.isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined;
+
+      setError(message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -104,7 +108,9 @@ export default function Register() {
               <select
                 id="role"
                 value={role}
-                onChange={(e) => setRole(e.target.value as 'customer' | 'organizer')}
+                onChange={(e) =>
+                  setRole(e.target.value as "customer" | "organizer")
+                }
                 disabled={loading}
               >
                 <option value="customer">Customer</option>
@@ -113,7 +119,7 @@ export default function Register() {
             </div>
 
             <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Creating account...' : 'Register'}
+              {loading ? "Creating account..." : "Register"}
             </button>
           </form>
 
