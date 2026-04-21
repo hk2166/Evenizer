@@ -29,12 +29,11 @@ export default function Register() {
 
     try {
       await register({ name, email, password, confirmPassword, role });
-      navigate("/"); // Redirect to home on success
+      navigate("/");
     } catch (error: unknown) {
       const message = axios.isAxiosError<{ message?: string }>(error)
         ? error.response?.data?.message
         : undefined;
-
       setError(message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
@@ -43,12 +42,74 @@ export default function Register() {
 
   return (
     <div className="auth-page">
+      {/* ── LEFT PANEL ── */}
+      <div className="auth-left-panel">
+        <div className="auth-logo">
+          <div className="auth-logo-icon"></div>
+          EventHub
+        </div>
+        <h1 className="auth-hero-text">
+          Discover, book,<br />
+          and manage<br />
+          events<br />
+          seamlessly.
+        </h1>
+        <p className="auth-subhero-text">
+          Join thousands of organizers and attendees.<br />
+          Experience the most secure and intuitive ticketing<br />
+          platform built for the modern era.
+        </p>
+
+        <div className="auth-stats">
+          <div className="stat-item">
+            <span className="stat-number">10K+</span>
+            <span className="stat-label">Active Organizers</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">2M+</span>
+            <span className="stat-label">Tickets Sold</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">✓</span>
+            <span className="stat-label">Trusted by professionals<br />Global event leaders</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── RIGHT PANEL ── */}
       <div className="auth-container">
         <div className="auth-card">
-          <h2>Join EventHub</h2>
-          <p className="auth-subtitle">Create your account to get started.</p>
+          <h2>Create account</h2>
+          <p className="auth-subtitle">
+            Sign up to start managing and discovering events.
+          </p>
 
           {error && <div className="error-message">{error}</div>}
+
+          {/* ── ROLE SELECTOR ── */}
+          <div className="role-selector">
+            <p className="role-selector-label">I want to join as a...</p>
+            <div className="role-cards">
+              <button
+                type="button"
+                className={`role-card ${role === "customer" ? "role-card-active" : ""}`}
+                onClick={() => setRole("customer")}
+              >
+                <span className="role-card-icon"></span>
+                <span className="role-card-title">Customer</span>
+                <span className="role-card-desc">Browse & book tickets for events</span>
+              </button>
+              <button
+                type="button"
+                className={`role-card ${role === "organizer" ? "role-card-active" : ""}`}
+                onClick={() => setRole("organizer")}
+              >
+                <span className="role-card-icon"></span>
+                <span className="role-card-title">Organizer</span>
+                <span className="role-card-desc">Create & manage your events</span>
+              </button>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="form-group">
@@ -58,7 +119,7 @@ export default function Register() {
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your full name"
+                placeholder="John Doe"
                 required
                 disabled={loading}
               />
@@ -71,7 +132,7 @@ export default function Register() {
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                placeholder="name@example.com"
                 required
                 disabled={loading}
               />
@@ -84,7 +145,7 @@ export default function Register() {
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
+                placeholder="••••••••"
                 required
                 disabled={loading}
               />
@@ -97,37 +158,24 @@ export default function Register() {
                 id="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm your password"
+                placeholder="••••••••"
                 required
                 disabled={loading}
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="role">Register as</label>
-              <select
-                id="role"
-                value={role}
-                onChange={(e) =>
-                  setRole(e.target.value as "customer" | "organizer")
-                }
-                disabled={loading}
-              >
-                <option value="customer">Customer</option>
-                <option value="organizer">Event Organizer</option>
-              </select>
-            </div>
-
             <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? "Creating account..." : "Register"}
+              {loading ? "Creating account..." : `Sign Up as ${role === "customer" ? "Customer" : "Organizer"}`}
             </button>
           </form>
 
-          <p className="auth-footer">
-            Already have an account? <Link to="/login">Login here</Link>
+          <p className="auth-footer" style={{ marginTop: "24px" }}>
+            Already have an account? <Link to="/login">Sign in</Link>
           </p>
         </div>
       </div>
     </div>
   );
 }
+
+

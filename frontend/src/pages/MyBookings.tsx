@@ -9,11 +9,11 @@ const STATUS_CONFIG: Record<
   BookingStatus,
   { label: string; color: string; emoji: string }
 > = {
-  reserved: { label: "Reserved", color: "status-reserved", emoji: "🕐" },
-  paid: { label: "Paid", color: "status-paid", emoji: "💳" },
-  confirmed: { label: "Confirmed", color: "status-confirmed", emoji: "✅" },
-  expired: { label: "Expired", color: "status-expired", emoji: "⏰" },
-  cancelled: { label: "Cancelled", color: "status-cancelled", emoji: "❌" },
+  reserved: { label: "Reserved", color: "status-reserved", emoji: "" },
+  paid: { label: "Paid", color: "status-paid", emoji: "" },
+  confirmed: { label: "Confirmed", color: "status-confirmed", emoji: "" },
+  expired: { label: "Expired", color: "status-expired", emoji: "" },
+  cancelled: { label: "Cancelled", color: "status-cancelled", emoji: "" },
 };
 
 export default function MyBookings() {
@@ -162,7 +162,7 @@ export default function MyBookings() {
         {/* Bookings List */}
         {filtered.length === 0 ? (
           <div className="no-bookings">
-            <div className="no-bookings-icon">🎫</div>
+            <div className="no-bookings-icon"></div>
             <h3>
               {filter === "all" ? "No bookings yet" : `No ${filter} bookings`}
             </h3>
@@ -189,11 +189,11 @@ export default function MyBookings() {
                     </div>
                     {getEventDate(booking) && (
                       <div className="booking-event-date">
-                        📅 {getEventDate(booking)}
+                         {getEventDate(booking)}
                       </div>
                     )}
                     <div className="booking-ticket-info">
-                      🎫 {getTicketName(booking)} × {booking.quantity}
+                       {getTicketName(booking)} × {booking.quantity}
                     </div>
                     <div className="booking-id-text">
                       ID: #{booking._id.slice(-8).toUpperCase()}
@@ -202,7 +202,7 @@ export default function MyBookings() {
 
                   <div className="booking-card-right">
                     <span className={`booking-status ${statusCfg.color}`}>
-                      {statusCfg.emoji} {statusCfg.label}
+                      {statusCfg.label}
                     </span>
                     <div className="booking-amount">
                       ₹{booking.totalAmount.toLocaleString()}
@@ -210,7 +210,7 @@ export default function MyBookings() {
 
                     {booking.status === "reserved" && (
                       <div className="booking-timer">
-                        ⏱ {getTimeLeft(booking.expiresAt)}
+                         {getTimeLeft(booking.expiresAt)}
                       </div>
                     )}
 

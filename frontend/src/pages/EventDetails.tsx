@@ -178,7 +178,7 @@ export default function EventDetails() {
             <div className="info-card">
               <h3>Event Details</h3>
               <div className="detail-item">
-                <span className="detail-icon">📅</span>
+                <span className="detail-icon"></span>
                 <div>
                   <strong>Date</strong>
                   <p>
@@ -192,7 +192,7 @@ export default function EventDetails() {
                 </div>
               </div>
               <div className="detail-item">
-                <span className="detail-icon">🕐</span>
+                <span className="detail-icon"></span>
                 <div>
                   <strong>Time</strong>
                   <p>
@@ -204,7 +204,7 @@ export default function EventDetails() {
                 </div>
               </div>
               <div className="detail-item">
-                <span className="detail-icon">📍</span>
+                <span className="detail-icon"></span>
                 <div>
                   <strong>Location</strong>
                   <p>{event.location}</p>
@@ -272,7 +272,7 @@ export default function EventDetails() {
                   </>
                 ) : user.role !== "customer" ? (
                   <p className="booking-info organizer-note">
-                    👤 You are viewing as an organizer
+                    You are viewing as an organizer
                   </p>
                 ) : !event.ticketCategories ||
                   event.ticketCategories.length === 0 ? (
@@ -365,7 +365,7 @@ export default function EventDetails() {
                   <div
                     className={`timer ${timeLeft < 300 ? "timer-urgent" : ""}`}
                   >
-                    <span className="timer-icon">⏱</span>
+                    <span className="timer-icon"></span>
                     <span>
                       Expires in{" "}
                       <strong>{formatTime(timeLeft)}</strong>
@@ -395,11 +395,6 @@ export default function EventDetails() {
                           onClick={() => setPaymentMethod(method)}
                         >
                           <span className="payment-icon">
-                            {method === "card"
-                              ? "💳"
-                              : method === "paypal"
-                                ? "🅿️"
-                                : "📱"}
                           </span>
                           <span>
                             {method === "card"
@@ -440,7 +435,7 @@ export default function EventDetails() {
             {/* Booking Step: Success */}
             {bookingStep === "success" && booking && (
               <div className="booking-card booking-success">
-                <div className="success-icon">✅</div>
+                <div className="success-icon"></div>
                 <h3>Booking Confirmed!</h3>
                 <p className="booking-info">
                   Your booking has been confirmed successfully.
