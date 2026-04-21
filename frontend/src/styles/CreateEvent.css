@@ -42,9 +42,9 @@
   letter-spacing: -0.5px;
 }
 
-.subtitle { margin: 0 0 36px; color: rgba(255,255,255,0.55); font-size: 15px; }
+.create-event-page .subtitle { margin: 0 0 36px; color: rgba(255,255,255,0.55); font-size: 15px; }
 
-.error-message {
+.create-event-page .error-message {
   background: rgba(255,107,107,0.1);
   color: #ff6b6b;
   padding: 13px 16px;
@@ -56,16 +56,16 @@
 }
 
 /* Form Sections */
-.event-form { display: flex; flex-direction: column; gap: 0; }
+.create-event-page .event-form { display: flex; flex-direction: column; gap: 0; }
 
-.form-section {
+.create-event-page .form-section {
   padding: 28px 0;
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-.form-section:last-of-type { border-bottom: none; }
+.create-event-page .form-section:last-of-type { border-bottom: none; }
 
-.form-section-title {
+.create-event-page .form-section-title {
   font-size: 16px;
   font-weight: 700;
   color: rgba(255,255,255,0.9);
@@ -75,41 +75,41 @@
   gap: 8px;
 }
 
-.section-header {
+.create-event-page .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
 
-.section-header .form-section-title { margin: 0; }
+.create-event-page .section-header .form-section-title { margin: 0; }
 
 /* Form Groups */
-.form-group {
+.create-event-page .form-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-bottom: 18px;
 }
 
-.form-group:last-child { margin-bottom: 0; }
+.create-event-page .form-group:last-child { margin-bottom: 0; }
 
-.form-row {
+.create-event-page .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
 
-.form-group label {
+.create-event-page .form-group label {
   font-weight: 600;
   color: rgba(255,255,255,0.85);
   font-size: 13px;
   letter-spacing: 0.2px;
 }
 
-.form-group input,
-.form-group textarea,
-.form-group select {
+.create-event-page .form-group input,
+.create-event-page .form-group textarea,
+.create-event-page .form-group select {
   padding: 13px 16px;
   background: rgba(255,255,255,0.07);
   backdrop-filter: blur(10px);
@@ -122,12 +122,12 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
-.form-group input::placeholder,
-.form-group textarea::placeholder { color: rgba(255,255,255,0.35); }
+.create-event-page .form-group input::placeholder,
+.create-event-page .form-group textarea::placeholder { color: rgba(255,255,255,0.35); }
 
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
+.create-event-page .form-group input:focus,
+.create-event-page .form-group textarea:focus,
+.create-event-page .form-group select:focus {
   outline: none;
   border-color: rgba(102,126,234,0.6);
   background: rgba(255,255,255,0.1);
@@ -135,17 +135,17 @@
   transform: translateY(-1px);
 }
 
-.form-group input:disabled,
-.form-group textarea:disabled,
-.form-group select:disabled { opacity: 0.5; cursor: not-allowed; }
+.create-event-page .form-group input:disabled,
+.create-event-page .form-group textarea:disabled,
+.create-event-page .form-group select:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.form-group textarea { resize: vertical; min-height: 100px; }
+.create-event-page .form-group textarea { resize: vertical; min-height: 100px; }
 
-.form-group select { cursor: pointer; }
-.form-group select option { background: #1a1a2e; color: #fff; }
+.create-event-page .form-group select { cursor: pointer; }
+.create-event-page .form-group select option { background: #1a1a2e; color: #fff; }
 
 /* Ticket Category Form */
-.ticket-category-form {
+.create-event-page .ticket-category-form {
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 16px;
@@ -153,7 +153,7 @@
   margin-bottom: 14px;
 }
 
-.ticket-form-header {
+.create-event-page .ticket-form-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -163,7 +163,7 @@
   color: rgba(255,255,255,0.6);
 }
 
-.btn-remove-ticket {
+.create-event-page .btn-remove-ticket {
   width: 28px;
   height: 28px;
   background: rgba(248,113,113,0.1);
@@ -178,9 +178,9 @@
   justify-content: center;
 }
 
-.btn-remove-ticket:hover { background: rgba(248,113,113,0.2); }
+.create-event-page .btn-remove-ticket:hover { background: rgba(248,113,113,0.2); }
 
-.btn-add-ticket {
+.create-event-page .btn-add-ticket {
   padding: 8px 16px;
   background: rgba(102,126,234,0.1);
   border: 1px solid rgba(102,126,234,0.3);
@@ -192,11 +192,11 @@
   transition: all 0.3s ease;
 }
 
-.btn-add-ticket:hover { background: rgba(102,126,234,0.2); }
-.btn-add-ticket:disabled { opacity: 0.5; cursor: not-allowed; }
+.create-event-page .btn-add-ticket:hover { background: rgba(102,126,234,0.2); }
+.create-event-page .btn-add-ticket:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Checkbox */
-.checkbox-label {
+.create-event-page .checkbox-label {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -206,21 +206,21 @@
   font-weight: 500;
 }
 
-.checkbox-label input[type="checkbox"] {
+.create-event-page .checkbox-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
   accent-color: #667eea;
   cursor: pointer;
 }
 
-.checkbox-hint {
+.create-event-page .checkbox-hint {
   margin: 8px 0 0 30px;
   font-size: 12px;
   color: rgba(255,255,255,0.4);
 }
 
 /* Submit Button */
-.btn-submit {
+.create-event-page .btn-submit {
   width: 100%;
   padding: 16px;
   background: linear-gradient(135deg, rgba(102,126,234,0.9), rgba(118,75,162,0.9));
@@ -237,12 +237,12 @@
   overflow: hidden;
 }
 
-.btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(102,126,234,0.6); }
-.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.create-event-page .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(102,126,234,0.6); }
+.create-event-page .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Responsive */
 @media (max-width: 640px) {
   .create-event-container { padding: 32px 24px; }
   .create-event-container h1 { font-size: 26px; }
-  .form-row { grid-template-columns: 1fr; }
+  .create-event-page .form-row { grid-template-columns: 1fr; }
 }
