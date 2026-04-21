@@ -11,9 +11,11 @@ import {
   getOrganizerEventsHandler,
 } from "../controllers/event.controller.js";
 import { validate } from "../middleware/validate.js";
-import { authMiddleware } from "../middleware/auth.middleware.js";
+import { authMiddleware, requireRoles } from "../middleware/auth.middleware.js";
+import { UserRole } from "../models/enum.js";
 import {
   createEventSchema,
+  addTicketCategorySchema,
   eventIdSchema,
   updateEventSchema,
 } from "../validation/event.validation.js";
@@ -36,6 +38,13 @@ eventRouter.get("/", getAllEventsHandler);
  * Get a single event by ID
  * Validates that :id is a valid UUID
  */
+eventRouter.get(
+  "/organizer/:organizerId",
+  authMiddleware,
+  requireRoles(UserRole.ORGANIZER, UserRole.ADMIN),
+  getOrganizerEventsHandler
+);
+
 eventRouter.get("/:id", validate(eventIdSchema), getEventByIdHandler);
 
 // ============================================
@@ -52,6 +61,7 @@ eventRouter.get("/:id", validate(eventIdSchema), getEventByIdHandler);
 eventRouter.post(
   "/",
   authMiddleware,
+  requireRoles(UserRole.ORGANIZER, UserRole.ADMIN),
   validate(createEventSchema),
   createEventHandler
 );
@@ -66,6 +76,7 @@ eventRouter.post(
 eventRouter.put(
   "/:id",
   authMiddleware,
+  requireRoles(UserRole.ORGANIZER, UserRole.ADMIN),
   validate(updateEventSchema),
   updateEventHandler
 );
@@ -80,6 +91,7 @@ eventRouter.put(
 eventRouter.delete(
   "/:id",
   authMiddleware,
+  requireRoles(UserRole.ORGANIZER, UserRole.ADMIN),
   validate(eventIdSchema),
   deleteEventHandler
 );
@@ -94,6 +106,7 @@ eventRouter.delete(
 eventRouter.post(
   "/:id/publish",
   authMiddleware,
+  requireRoles(UserRole.ORGANIZER, UserRole.ADMIN),
   validate(eventIdSchema),
   publishEventHandler
 );
@@ -108,18 +121,7 @@ eventRouter.post(
 eventRouter.post(
   "/:id/ticket-categories",
   authMiddleware,
-  validate(eventIdSchema),
+  requireRoles(UserRole.ORGANIZER, UserRole.ADMIN),
+  validate(addTicketCategorySchema),
   addTicketCategoryHandler
-);
-
-/**
- * GET /events/organizer/:organizerId
- * Get all events for a specific organizer
- * 1. authMiddleware - Verify user is logged in
- * 2. getOrganizerEventsHandler - Retrieve organizer's events
- */
-eventRouter.get(
-  "/organizer/:organizerId",
-  authMiddleware,
-  getOrganizerEventsHandler
 );

@@ -1,26 +1,18 @@
+import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import jwt, { SignOptions } from "jsonwebtoken";
-import { v4 as uuidv4 } from "uuid";
+import { eq } from "drizzle-orm";
+import { OAuth2Client } from "google-auth-library";
+import { db } from "../db/index.js";
+import { users } from "../db/schema.js";
 import { UserRole } from "../models/enum.js";
-import { Customer } from "../models/Customer.js";
-import { Organizer } from "../models/Organizer.js";
-import { db, MockRepository } from "../repositories/mock.repository.js";
 import { env } from "../config/env.js";
 
 type AuthSuccess = {
   token: string;
-  user: {
-    userId: string;
-    name: string;
-    email: string;
-    role: UserRole;
-  };
+  user: { userId: string; name: string; email: string; role: UserRole };
 };
-
-type AuthError = {
-  error: string;
-};
-
+type AuthError = { error: string };
 type AuthResponse = AuthSuccess | AuthError;
 
 export class AuthService {
@@ -32,37 +24,104 @@ export class AuthService {
   ): Promise<AuthResponse> {
     const normalizedEmail = email.toLowerCase().trim();
 
-    const existingUser = Array.from(db.users.values()).find(
-      (u) => u.email === normalizedEmail,
-    );
+    const [existing] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, normalizedEmail))
+      .limit(1);
 
-    if (existingUser) {
-      return { error: "Email already registered" };
+    if (existing) return { error: "Email already registered" };
+
+    if (role !== UserRole.CUSTOMER && role !== UserRole.ORGANIZER) {
+      return { error: "Invalid user role" };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    let newUser;
+    const [newUser] = await db
+      .insert(users)
+      .values({ name, email: normalizedEmail, password: hashedPassword, role })
+      .returning();
 
-    if (role === UserRole.CUSTOMER) {
-      newUser = new Customer(uuidv4(), name, normalizedEmail, hashedPassword);
-    } else if (role === UserRole.ORGANIZER) {
-      newUser = new Organizer(uuidv4(), name, normalizedEmail, hashedPassword);
-    } else {
-      return { error: "Invalid user role" }; // ✅ safety check
-    }
-
-    MockRepository.save(db.users, newUser);
-
-    const token = this.generateToken(newUser.id, newUser.email, newUser.role);
-
+    const token = this.generateToken(
+      newUser.id,
+      newUser.email,
+      newUser.role as UserRole,
+    );
     return {
       token,
       user: {
-        userId: newUser.id, // Return as userId for consistency
+        userId: newUser.id,
         name: newUser.name,
         email: newUser.email,
-        role: newUser.role,
+        role: newUser.role as UserRole,
+      },
+    };
+  }
+
+  static async loginWithGoogle(credential: string): Promise<AuthResponse> {
+    if (!env.googleClientId) {
+      return { error: "Google login is not configured" };
+    }
+
+    const client = new OAuth2Client(env.googleClientId);
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: env.googleClientId,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload?.email) {
+      return { error: "Google account did not return an email" };
+    }
+
+    if (!payload.email_verified) {
+      return { error: "Google account email is not verified" };
+    }
+
+    const normalizedEmail = payload.email.toLowerCase().trim();
+    const displayName =
+      payload.name?.trim() ||
+      payload.given_name?.trim() ||
+      normalizedEmail.split("@")[0];
+
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, normalizedEmail))
+      .limit(1);
+
+    let user = existingUser;
+
+    if (!user) {
+      const randomPassword = crypto.randomBytes(32).toString("hex");
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+      const [newUser] = await db
+        .insert(users)
+        .values({
+          name: displayName,
+          email: normalizedEmail,
+          password: hashedPassword,
+          role: UserRole.CUSTOMER,
+        })
+        .returning();
+
+      user = newUser;
+    }
+
+    const token = this.generateToken(
+      user.id,
+      user.email,
+      user.role as UserRole,
+    );
+    return {
+      token,
+      user: {
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role as UserRole,
       },
     };
   }
@@ -70,31 +129,45 @@ export class AuthService {
   static async login(email: string, password: string): Promise<AuthResponse> {
     const normalizedEmail = email.toLowerCase().trim();
 
-    const user = Array.from(db.users.values()).find(
-      (u) => u.email === normalizedEmail,
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, normalizedEmail))
+      .limit(1);
+
+    if (!user) return { error: "Invalid email or password" };
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) return { error: "Invalid email or password" };
+
+    const token = this.generateToken(
+      user.id,
+      user.email,
+      user.role as UserRole,
     );
-
-    if (!user) {
-      return { error: "Invalid email or password" };
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return { error: "Invalid email or password" };
-    }
-
-    const token = this.generateToken(user.id, user.email, user.role);
-
     return {
       token,
       user: {
-        userId: user.id, // Return as userId for consistency
+        userId: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: user.role as UserRole,
       },
     };
+  }
+
+  static async getUserById(userId: string) {
+    const [user] = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    return user || null;
   }
 
   private static generateToken(
