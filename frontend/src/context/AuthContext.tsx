@@ -16,6 +16,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
+  googleLogin: (credential: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
@@ -34,12 +35,16 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   // Login function
   const login = useCallback(async (email: string, password: string) => {
     const response = await authAPI.login({ email, password });
-
-    // Save token
     localStorage.setItem("token", response.token);
     setToken(response.token);
+    setUser(response.user);
+  }, []);
 
-    // Save user
+  const googleLogin = useCallback(async (credential: string) => {
+    const response = await authAPI.googleLogin({ credential });
+
+    localStorage.setItem("token", response.token);
+    setToken(response.token);
     setUser(response.user);
   }, []);
 
@@ -82,8 +87,8 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, token, login, register, logout, isLoading }),
-    [user, token, login, register, logout, isLoading],
+    () => ({ user, token, login, googleLogin, register, logout, isLoading }),
+    [user, token, login, googleLogin, register, logout, isLoading],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

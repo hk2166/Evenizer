@@ -9,8 +9,9 @@ import CreateEvent from "./pages/CreateEvent";
 import MyEvents from "./pages/MyEvents";
 import MyBookings from "./pages/MyBookings";
 import CreateEventFAB from "./components/CreateEventFAB";
-import AdminDashboard from "./pages/AdminDashboard";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import "./index.css";
+
 function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
@@ -26,14 +27,14 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<MainLayout><Home /></MainLayout>} />
+          <Route path="/" element={<Home />} />
           <Route path="/login" element={<MainLayout><Login /></MainLayout>} />
           <Route path="/register" element={<MainLayout><Register /></MainLayout>} />
           <Route path="/my-events" element={<MainLayout><MyEvents /></MainLayout>} />
           <Route path="/events/create" element={<MainLayout><CreateEvent /></MainLayout>} />
           <Route path="/events/:id" element={<MainLayout><EventDetails /></MainLayout>} />
           <Route path="/bookings" element={<MainLayout><MyBookings /></MainLayout>} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/super-admin" element={<SuperAdminDashboard />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
