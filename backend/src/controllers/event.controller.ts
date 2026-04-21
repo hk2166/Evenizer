@@ -5,6 +5,8 @@ import {
   NotFoundError,
   ForbiddenError,
 } from "../services/event.service.js";
+import type { EventWithCategories } from "../services/event.service.js";
+import type { TicketCategory } from "../db/schema.js";
 import {
   CreateEventInput,
   EventIdParams,
@@ -19,6 +21,22 @@ type CreateEventBody = CreateEventInput & {
     totalSeats: number;
   }[];
 };
+
+const serializeTicketCategory = (category: TicketCategory) => ({
+  ...category,
+  price: Number(category.price),
+});
+
+const serializeEvent = (event: EventWithCategories) => ({
+  id: event.id,
+  title: event.title,
+  description: event.description,
+  location: event.location,
+  status: event.status,
+  date: event.date,
+  organizerId: event.organizerId,
+  ticketCategories: event.ticketCategories.map(serializeTicketCategory),
+});
 
 /**
  * POST /events - Create event
@@ -42,16 +60,7 @@ export const createEventHandler = async (
 
     return res.status(201).json({
       message: "Event created successfully",
-      event: {
-        id: event._id,
-        title: event.title,
-        description: event.description,
-        location: event.location,
-        status: event.status,
-        date: event.date,
-        organizerId: event.organizerId,
-        ticketCategories: event.ticketCategories,
-      },
+      event: serializeEvent(event),
     });
   } catch (error: any) {
     if (error instanceof ValidationError) {
@@ -75,16 +84,7 @@ export const getAllEventsHandler = async (req: Request, res: Response) => {
     return res.status(200).json({
       message: "Events retrieved successfully",
       count: events.length,
-      events: events.map((event) => ({
-        id: event._id,
-        title: event.title,
-        description: event.description,
-        location: event.location,
-        status: event.status,
-        date: event.date,
-        organizerId: event.organizerId,
-        ticketCategories: event.ticketCategories,
-      })),
+      events: events.map(serializeEvent),
     });
   } catch (error: any) {
     console.error("Error fetching events:", error);
@@ -110,16 +110,7 @@ export const getEventByIdHandler = async (
 
     return res.status(200).json({
       message: "Event retrieved successfully",
-      event: {
-        id: event._id,
-        title: event.title,
-        description: event.description,
-        location: event.location,
-        status: event.status,
-        date: event.date,
-        organizerId: event.organizerId,
-        ticketCategories: event.ticketCategories,
-      },
+      event: serializeEvent(event),
     });
   } catch (error: any) {
     if (error instanceof NotFoundError) {
@@ -150,15 +141,7 @@ export const updateEventHandler = async (
 
     return res.status(200).json({
       message: "Event updated successfully",
-      event: {
-        id: event._id,
-        title: event.title,
-        description: event.description,
-        location: event.location,
-        status: event.status,
-        date: event.date,
-        organizerId: event.organizerId,
-      },
+      event: serializeEvent(event),
     });
   } catch (error: any) {
     if (error instanceof NotFoundError) {
@@ -224,7 +207,7 @@ export const publishEventHandler = async (
     return res.status(200).json({
       message: "Event published successfully",
       event: {
-        id: event._id,
+        id: event.id,
         title: event.title,
         status: event.status,
       },
@@ -265,14 +248,7 @@ export const addTicketCategoryHandler = async (
 
     return res.status(201).json({
       message: "Ticket category added successfully",
-      category: {
-        id: category._id,
-        title: category.title,
-        price: category.price,
-        type: category.type,
-        totalSeats: category.totalSeats,
-        availableSeats: category.availableSeats,
-      },
+      category: serializeTicketCategory(category),
     });
   } catch (error: any) {
     if (error instanceof NotFoundError) {
@@ -296,7 +272,7 @@ export const getOrganizerEventsHandler = async (
   try {
     const { organizerId } = req.params;
 
-    if (req.user!.userId !== organizerId) {
+    if (req.user!.role !== "admin" && req.user!.userId !== organizerId) {
       return res
         .status(403)
         .json({ message: "You can only view your own events" });
@@ -311,15 +287,7 @@ export const getOrganizerEventsHandler = async (
     return res.status(200).json({
       message: "Organizer events retrieved successfully",
       count: events.length,
-      events: events.map((event) => ({
-        id: event._id,
-        title: event.title,
-        description: event.description,
-        location: event.location,
-        status: event.status,
-        date: event.date,
-        ticketCategories: event.ticketCategories,
-      })),
+      events: events.map(serializeEvent),
     });
   } catch (error: any) {
     console.error("Error fetching organizer events:", error);

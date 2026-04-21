@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import { BookingService, ValidationError, NotFoundError, ConflictError, ForbiddenError, PaymentError } from "../services/booking.service.js";
-import { BookingStatus, PaymentMethod } from "../models/enum.js";
+import { BookingStatus, PaymentMethod, UserRole } from "../models/enum.js";
+import { eq } from "drizzle-orm";
+import { db } from "../db/index.js";
+import { events } from "../db/schema.js";
 
 /**
  * POST /bookings - Create a new booking
@@ -134,9 +137,18 @@ export const getCustomerBookingsHandler = async (req: Request, res: Response) =>
   try {
     const { customerId } = req.params;
     const { status } = req.query;
+    const currentUser = req.user;
 
     if (!customerId || Array.isArray(customerId)) {
       return res.status(400).json({ error: "Invalid customer ID" });
+    }
+
+    if (!currentUser) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    if (currentUser.role !== UserRole.ADMIN && currentUser.userId !== customerId) {
+      return res.status(403).json({ error: "You can only view your own bookings" });
     }
 
     const bookingStatus = status ? (status as BookingStatus) : undefined;
@@ -163,12 +175,33 @@ export const getEventBookingsHandler = async (req: Request, res: Response) => {
   try {
     const { eventId } = req.params;
     const { status } = req.query;
+    const currentUser = req.user;
 
     if (!eventId || Array.isArray(eventId)) {
       return res.status(400).json({ error: "Invalid event ID" });
     }
 
-    // TODO: Add authorization check - only event organizer should access this
+    if (!currentUser) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const [event] = await db
+      .select({ organizerId: events.organizerId })
+      .from(events)
+      .where(eq(events.id, eventId))
+      .limit(1);
+
+    if (!event) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    if (
+      currentUser.role !== UserRole.ADMIN &&
+      (currentUser.role !== UserRole.ORGANIZER || event.organizerId !== currentUser.userId)
+    ) {
+      return res.status(403).json({ error: "You can only view bookings for your own events" });
+    }
+
     const bookingStatus = status ? (status as BookingStatus) : undefined;
 
     const bookings = await BookingService.getEventBookings(
@@ -192,12 +225,31 @@ export const getEventBookingsHandler = async (req: Request, res: Response) => {
 export const getBookingByIdHandler = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const currentUser = req.user;
 
     if (!id || Array.isArray(id)) {
       return res.status(400).json({ error: "Invalid booking ID" });
     }
 
+    if (!currentUser) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const booking = await BookingService.getBookingById(id);
+
+    const eventOwnerId =
+      typeof booking.eventId === "object" && booking.eventId !== null
+        ? booking.eventId.organizerId
+        : undefined;
+
+    const canView =
+      currentUser.role === UserRole.ADMIN ||
+      booking.customerId === currentUser.userId ||
+      (currentUser.role === UserRole.ORGANIZER && eventOwnerId === currentUser.userId);
+
+    if (!canView) {
+      return res.status(403).json({ error: "You do not have access to this booking" });
+    }
 
     res.status(200).json({ booking });
   } catch (error: any) {
