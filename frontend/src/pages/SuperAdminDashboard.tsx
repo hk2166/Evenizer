@@ -42,7 +42,7 @@ const SuperAdminDashboard = () => {
         if (!cancelled) {
           setDashboard(response.dashboard);
         }
-      } catch (err) {
+      } catch {
         if (!cancelled) {
           setError("Could not load admin dashboard data.");
         }
@@ -78,6 +78,16 @@ const SuperAdminDashboard = () => {
   const metrics = dashboard?.metrics;
   const chartData = dashboard?.chart ?? [];
   const activities = dashboard?.activities ?? [];
+  let feedTitle = "No activity yet";
+  let feedText = "New platform activity will appear here.";
+
+  if (loading) {
+    feedTitle = "Loading activity";
+    feedText = "Fetching latest platform updates.";
+  } else if (error) {
+    feedTitle = "Activity unavailable";
+    feedText = "Please refresh to try again.";
+  }
 
   const grossSales = formatCurrency(metrics?.grossSalesVolume ?? 0);
   const ticketsProcessed = formatNumber(metrics?.ticketsProcessed ?? 0);
@@ -142,8 +152,7 @@ const SuperAdminDashboard = () => {
 
           <div className="sa-topbar-right">
             <div className="sa-sync-chip">
-              <span className="sa-sync-dot" />
-              System Sync Active
+              <span className="sa-sync-dot" /> System Sync Active
             </div>
 
             <button
@@ -323,21 +332,9 @@ const SuperAdminDashboard = () => {
                   <FeedItem
                     iconColor="#e8f1ff"
                     icon={<Bell size={14} color="#3f7bfb" />}
-                    title={
-                      loading
-                        ? "Loading activity"
-                        : error
-                          ? "Activity unavailable"
-                          : "No activity yet"
-                    }
+                    title={feedTitle}
                     time=""
-                    text={
-                      loading
-                        ? "Fetching latest platform updates."
-                        : error
-                          ? "Please refresh to try again."
-                          : "New platform activity will appear here."
-                    }
+                    text={feedText}
                   />
                 )}
               </ul>
@@ -355,15 +352,13 @@ const SuperAdminDashboard = () => {
   );
 };
 
-function NavItem({
-  icon,
-  label,
-  active = false,
-}: {
+type NavItemProps = Readonly<{
   icon: React.ReactNode;
   label: string;
   active?: boolean;
-}) {
+}>;
+
+function NavItem({ icon, label, active = false }: NavItemProps) {
   return (
     <button className={`sa-nav-item ${active ? "active" : ""}`} type="button">
       {icon}
@@ -371,6 +366,16 @@ function NavItem({
     </button>
   );
 }
+
+type MetricCardProps = Readonly<{
+  title: string;
+  value: string;
+  chip: string;
+  trend: string;
+  icon: React.ReactNode;
+  iconBg: string;
+  flat?: boolean;
+}>;
 
 function MetricCard({
   title,
@@ -380,15 +385,7 @@ function MetricCard({
   icon,
   iconBg,
   flat = false,
-}: {
-  title: string;
-  value: string;
-  chip: string;
-  trend: string;
-  icon: React.ReactNode;
-  iconBg: string;
-  flat?: boolean;
-}) {
+}: MetricCardProps) {
   return (
     <div className="sa-metric-card">
       <div className="sa-metric-head">
@@ -410,19 +407,15 @@ function MetricCard({
   );
 }
 
-function FeedItem({
-  iconColor,
-  icon,
-  title,
-  time,
-  text,
-}: {
+type FeedItemProps = Readonly<{
   iconColor: string;
   icon: React.ReactNode;
   title: string;
   time: string;
   text: string;
-}) {
+}>;
+
+function FeedItem({ iconColor, icon, title, time, text }: FeedItemProps) {
   return (
     <li className="sa-feed-item">
       <div className="sa-feed-dot" style={{ backgroundColor: iconColor }}>
