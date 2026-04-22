@@ -219,8 +219,9 @@ export default function CreateEvent() {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Category Name</label>
+                    <label htmlFor={`cat-title-${index}`}>Category Name</label>
                     <input
+                      id={`cat-title-${index}`}
                       type="text"
                       value={cat.title}
                       onChange={(e) =>
@@ -232,8 +233,9 @@ export default function CreateEvent() {
                   </div>
 
                   <div className="form-group">
-                    <label>Type</label>
+                    <label htmlFor={`cat-type-${index}`}>Type</label>
                     <select
+                      id={`cat-type-${index}`}
                       value={cat.type}
                       onChange={(e) =>
                         updateTicketCategory(index, "type", e.target.value)
@@ -250,8 +252,9 @@ export default function CreateEvent() {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Price (₹)</label>
+                    <label htmlFor={`cat-price-${index}`}>Price (₹)</label>
                     <input
+                      id={`cat-price-${index}`}
                       type="number"
                       value={cat.price}
                       onChange={(e) =>
@@ -264,8 +267,9 @@ export default function CreateEvent() {
                   </div>
 
                   <div className="form-group">
-                    <label>Total Seats</label>
+                    <label htmlFor={`cat-seats-${index}`}>Total Seats</label>
                     <input
+                      id={`cat-seats-${index}`}
                       type="number"
                       value={cat.totalSeats}
                       onChange={(e) =>
@@ -287,8 +291,9 @@ export default function CreateEvent() {
 
           {/* Publish Option */}
           <div className="form-section">
-            <label className="checkbox-label">
+            <label className="checkbox-label" htmlFor="publishAfter">
               <input
+                id="publishAfter"
                 type="checkbox"
                 checked={publishAfter}
                 onChange={(e) => setPublishAfter(e.target.checked)}

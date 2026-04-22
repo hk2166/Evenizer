@@ -24,8 +24,8 @@ export default function Navbar() {
     navigate("/login");
   };
 
-  // Home page has its own built-in header
-  if (isHome) return null;
+  // Landing page and super-admin have their own headers
+  if (isHome || location.pathname === "/super-admin") return null;
 
   return (
     <nav className={`navbar ${scrolled ? "scrolled" : ""} ${isHome ? "navbar-light" : ""}`}>
@@ -38,9 +38,10 @@ export default function Navbar() {
           {user ? (
             <>
               {user.role === "customer" && (
-                <Link to="/bookings" className="navbar-link">
-                  My Tickets
-                </Link>
+                <>
+                  <Link to="/dashboard" className="navbar-link">Dashboard</Link>
+                  <Link to="/bookings" className="navbar-link">My Tickets</Link>
+                </>
               )}
               {(user.role === "organizer" || user.role === "admin") && (
                 <>

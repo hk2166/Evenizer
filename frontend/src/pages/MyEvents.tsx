@@ -1,9 +1,17 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { eventAPI, eventsAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import type { Event } from "../types";
 import "../styles/MyEvents.css";
+
+const getEntityId = (entity: { id?: string; _id?: string }) => entity.id ?? entity._id ?? "";
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  axios.isAxiosError<{ message?: string; error?: string }>(error)
+    ? error.response?.data?.message ?? error.response?.data?.error ?? fallback
+    : fallback;
 
 export default function MyEvents() {
   const { user } = useAuth();
@@ -15,19 +23,7 @@ export default function MyEvents() {
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    if (user.role !== "organizer" && user.role !== "admin") {
-      navigate("/");
-      return;
-    }
-    fetchEvents();
-  }, [user]);
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
@@ -38,7 +34,19 @@ export default function MyEvents() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    if (user.role !== "organizer" && user.role !== "admin") {
+      navigate("/");
+      return;
+    }
+    fetchEvents();
+  }, [fetchEvents, navigate, user]);
 
   const handlePublish = async (eventId: string) => {
     setPublishingId(eventId);
@@ -46,13 +54,13 @@ export default function MyEvents() {
       await eventsAPI.publish(eventId);
       setEvents((prev) =>
         prev.map((e) =>
-          e.id === eventId || (e as any)._id === eventId
+          getEntityId(e) === eventId
             ? { ...e, status: "published" as const }
             : e
         )
       );
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to publish event");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Failed to publish event"));
     } finally {
       setPublishingId(null);
     }
@@ -64,16 +72,16 @@ export default function MyEvents() {
     try {
       await eventsAPI.delete(eventId);
       setEvents((prev) =>
-        prev.filter((e) => e.id !== eventId && (e as any)._id !== eventId)
+        prev.filter((e) => getEntityId(e) !== eventId)
       );
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to delete event");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Failed to delete event"));
     } finally {
       setDeletingId(null);
     }
   };
 
-  const getEventId = (event: Event) => event.id || (event as any)._id;
+  const getEventId = (event: Event) => getEntityId(event);
 
   if (loading) {
     return (
@@ -106,7 +114,7 @@ export default function MyEvents() {
 
         {events.length === 0 ? (
           <div className="no-events-card">
-            <div className="no-events-icon">🎪</div>
+            <div className="no-events-icon"></div>
             <h3>No events yet</h3>
             <p>Create your first event and start selling tickets!</p>
             <button
@@ -139,17 +147,17 @@ export default function MyEvents() {
                       <h3>{event.title}</h3>
                       <p className="event-list-desc">{event.description}</p>
                       <div className="event-list-meta">
-                        <span>📅 {new Date(event.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</span>
-                        <span>📍 {event.location}</span>
+                        <span>{new Date(event.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</span>
+                        <span>{event.location}</span>
                         {ticketCount > 0 && (
-                          <span>🎫 {ticketCount} categor{ticketCount !== 1 ? "ies" : "y"} · {availableSeats}/{totalSeats} seats</span>
+                          <span>{ticketCount} categor{ticketCount !== 1 ? "ies" : "y"} · {availableSeats}/{totalSeats} seats</span>
                         )}
                       </div>
                     </div>
 
                     <div className="event-list-right">
                       <span className={`event-status-badge status-${event.status}`}>
-                        {event.status === "published" ? "🟢" : event.status === "draft" ? "🟡" : "🔴"} {event.status}
+                        {event.status}
                       </span>
 
                       <div className="event-list-actions">

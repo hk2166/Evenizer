@@ -1,9 +1,17 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { bookingAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import type { Booking, BookingStatus, Event, TicketCategory } from "../types";
 import "../styles/MyBookings.css";
+
+const getEntityId = (entity: { id?: string; _id?: string }) => entity.id ?? entity._id ?? "";
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  axios.isAxiosError<{ message?: string; error?: string }>(error)
+    ? error.response?.data?.message ?? error.response?.data?.error ?? fallback
+    : fallback;
 
 const STATUS_CONFIG: Record<
   BookingStatus,
@@ -26,15 +34,7 @@ export default function MyBookings() {
   const [filter, setFilter] = useState<BookingStatus | "all">("all");
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    fetchBookings();
-  }, [user]);
-
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
@@ -45,7 +45,15 @@ export default function MyBookings() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    fetchBookings();
+  }, [fetchBookings, navigate, user]);
 
   const handleCancel = async (bookingId: string) => {
     if (!confirm("Are you sure you want to cancel this booking?")) return;
@@ -54,11 +62,11 @@ export default function MyBookings() {
       await bookingAPI.cancelBooking(bookingId);
       setBookings((prev) =>
         prev.map((b) =>
-          b._id === bookingId ? { ...b, status: "cancelled" } : b
+          getEntityId(b) === bookingId ? { ...b, status: "cancelled" } : b
         )
       );
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to cancel booking");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Failed to cancel booking"));
     } finally {
       setCancellingId(null);
     }
@@ -124,7 +132,7 @@ export default function MyBookings() {
               {bookings.length} booking{bookings.length !== 1 ? "s" : ""} total
             </p>
           </div>
-          <button onClick={() => navigate("/")} className="btn-browse">
+          <button onClick={() => navigate("/#featured")} className="btn-browse">
             + Book More
           </button>
         </div>
@@ -181,8 +189,13 @@ export default function MyBookings() {
           <div className="bookings-list">
             {filtered.map((booking) => {
               const statusCfg = STATUS_CONFIG[booking.status];
+              const bookingId = getEntityId(booking);
+              const eventId =
+                typeof booking.eventId === "object"
+                  ? getEntityId(booking.eventId)
+                  : booking.eventId;
               return (
-                <div key={booking._id} className="booking-card-item">
+                <div key={bookingId} className="booking-card-item">
                   <div className="booking-card-left">
                     <div className="booking-event-title">
                       {getEventTitle(booking)}
@@ -196,7 +209,7 @@ export default function MyBookings() {
                        {getTicketName(booking)} × {booking.quantity}
                     </div>
                     <div className="booking-id-text">
-                      ID: #{booking._id.slice(-8).toUpperCase()}
+                      ID: #{bookingId.slice(-8).toUpperCase()}
                     </div>
                   </div>
 
@@ -219,18 +232,16 @@ export default function MyBookings() {
                         <>
                           <button
                             className="btn-pay"
-                            onClick={() =>
-                              navigate(`/events/${typeof booking.eventId === "object" ? (booking.eventId as Event).id || (booking.eventId as any)._id : booking.eventId}`)
-                            }
+                            onClick={() => navigate(`/events/${eventId}`)}
                           >
                             Pay Now
                           </button>
                           <button
                             className="btn-cancel"
-                            onClick={() => handleCancel(booking._id)}
-                            disabled={cancellingId === booking._id}
+                            onClick={() => handleCancel(bookingId)}
+                            disabled={cancellingId === bookingId}
                           >
-                            {cancellingId === booking._id
+                            {cancellingId === bookingId
                               ? "Cancelling..."
                               : "Cancel"}
                           </button>
@@ -239,9 +250,7 @@ export default function MyBookings() {
                       {booking.status === "expired" && (
                         <button
                           className="btn-rebook"
-                          onClick={() =>
-                            navigate(`/events/${typeof booking.eventId === "object" ? (booking.eventId as Event).id || (booking.eventId as any)._id : booking.eventId}`)
-                          }
+                          onClick={() => navigate(`/events/${eventId}`)}
                         >
                           Book Again
                         </button>

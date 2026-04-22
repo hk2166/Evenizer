@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import { eventAPI } from "../services/api";
 import { bookingAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -7,6 +8,13 @@ import type { Event, TicketCategory, Booking, PaymentMethod } from "../types";
 import "../styles/EventDetails.css";
 
 type BookingStep = "select" | "payment" | "success";
+
+const getEntityId = (entity: { id?: string; _id?: string }) => entity.id ?? entity._id ?? "";
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  axios.isAxiosError<{ message?: string; error?: string }>(error)
+    ? error.response?.data?.message ?? error.response?.data?.error ?? fallback
+    : fallback;
 
 export default function EventDetails() {
   const { id } = useParams<{ id: string }>();
@@ -29,12 +37,19 @@ export default function EventDetails() {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   const fetchEvent = useCallback(async () => {
-    if (!id) return;
+    if (!id) {
+      setError("Missing event ID");
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError("");
     try {
       const data = await eventAPI.getEventById(id);
       setEvent(data.event);
-    } catch {
-      setError("Failed to load event details");
+    } catch (error: unknown) {
+      setError(getErrorMessage(error, "Failed to load event details"));
     } finally {
       setLoading(false);
     }
@@ -65,15 +80,13 @@ export default function EventDetails() {
     try {
       const result = await bookingAPI.createBooking(
         id!,
-        selectedCategory._id,
+        getEntityId(selectedCategory),
         quantity
       );
       setBooking(result.booking);
       setBookingStep("payment");
-    } catch (err: any) {
-      setBookingError(
-        err.response?.data?.message || "Failed to create booking"
-      );
+    } catch (error: unknown) {
+      setBookingError(getErrorMessage(error, "Failed to create booking"));
     } finally {
       setBookingLoading(false);
     }
@@ -85,13 +98,13 @@ export default function EventDetails() {
     setBookingError("");
     try {
       const result = await bookingAPI.processPayment(
-        booking._id,
+        getEntityId(booking),
         paymentMethod
       );
       setBooking(result.booking);
       setBookingStep("success");
-    } catch (err: any) {
-      setBookingError(err.response?.data?.message || "Payment failed");
+    } catch (error: unknown) {
+      setBookingError(getErrorMessage(error, "Payment failed"));
     } finally {
       setBookingLoading(false);
     }
@@ -101,14 +114,14 @@ export default function EventDetails() {
     if (!booking) return;
     setBookingLoading(true);
     try {
-      await bookingAPI.cancelBooking(booking._id);
+      await bookingAPI.cancelBooking(getEntityId(booking));
       setBooking(null);
       setBookingStep("select");
       setSelectedCategory(null);
       setQuantity(1);
       fetchEvent(); // refresh seat counts
-    } catch (err: any) {
-      setBookingError(err.response?.data?.message || "Failed to cancel");
+    } catch (error: unknown) {
+      setBookingError(getErrorMessage(error, "Failed to cancel"));
     } finally {
       setBookingLoading(false);
     }
@@ -217,10 +230,16 @@ export default function EventDetails() {
               <div className="info-card">
                 <h3>Ticket Categories</h3>
                 <div className="ticket-categories">
-                  {event.ticketCategories.map((cat) => (
+                  {event.ticketCategories.map((cat) => {
+                    const categoryId = getEntityId(cat);
+                    const selectedCategoryId = selectedCategory
+                      ? getEntityId(selectedCategory)
+                      : "";
+
+                    return (
                     <div
-                      key={cat._id}
-                      className={`ticket-category-card ${selectedCategory?._id === cat._id ? "selected" : ""} ${cat.availableSeats === 0 ? "sold-out" : ""}`}
+                      key={categoryId}
+                      className={`ticket-category-card ${selectedCategoryId === categoryId ? "selected" : ""} ${cat.availableSeats === 0 ? "sold-out" : ""}`}
                       onClick={() => {
                         if (cat.availableSeats > 0 && bookingStep === "select") {
                           setSelectedCategory(cat);
@@ -245,7 +264,8 @@ export default function EventDetails() {
                         </span>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -444,7 +464,7 @@ export default function EventDetails() {
                   <div className="summary-row">
                     <span>Booking ID</span>
                     <span className="booking-id">
-                      #{booking._id.slice(-8).toUpperCase()}
+                      #{getEntityId(booking).slice(-8).toUpperCase()}
                     </span>
                   </div>
                   <div className="summary-row">
