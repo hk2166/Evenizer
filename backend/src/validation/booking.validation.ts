@@ -1,11 +1,18 @@
 import { z } from "zod";
-import { PaymentMethod } from "../models/enum.js";
+import { BookingStatus, PaymentMethod } from "../models/enum.js";
+
+const postgresUuid = z
+  .string()
+  .regex(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    "ID must be a valid UUID",
+  );
 
 // Validation schema for creating a booking
 export const createBookingSchema = z.object({
   body: z.object({
-    eventId: z.string().min(1, "Event ID is required"),
-    ticketCategoryId: z.string().min(1, "Ticket category ID is required"),
+    eventId: postgresUuid,
+    ticketCategoryId: postgresUuid,
     quantity: z.number().int().positive("Quantity must be a positive integer"),
   }),
 });
@@ -16,41 +23,41 @@ export const processPaymentSchema = z.object({
     paymentMethod: z.nativeEnum(PaymentMethod),
   }),
   params: z.object({
-    id: z.string().min(1, "Booking ID is required"),
+    id: postgresUuid,
   }),
 });
 
 // Validation schema for cancelling booking
 export const cancelBookingSchema = z.object({
   params: z.object({
-    id: z.string().min(1, "Booking ID is required"),
+    id: postgresUuid,
   }),
 });
 
 // Validation schema for getting customer bookings
 export const getCustomerBookingsSchema = z.object({
   params: z.object({
-    customerId: z.string().min(1, "Customer ID is required"),
+    customerId: postgresUuid,
   }),
   query: z.object({
-    status: z.string().optional(),
+    status: z.nativeEnum(BookingStatus).optional(),
   }),
 });
 
 // Validation schema for getting event bookings
 export const getEventBookingsSchema = z.object({
   params: z.object({
-    eventId: z.string().min(1, "Event ID is required"),
+    eventId: postgresUuid,
   }),
   query: z.object({
-    status: z.string().optional(),
+    status: z.nativeEnum(BookingStatus).optional(),
   }),
 });
 
 // Validation schema for getting booking by ID
 export const getBookingByIdSchema = z.object({
   params: z.object({
-    id: z.string().min(1, "Booking ID is required"),
+    id: postgresUuid,
   }),
 });
 
