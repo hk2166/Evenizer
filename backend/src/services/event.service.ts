@@ -1,284 +1,134 @@
-import mongoose from "mongoose";
-import { EventModel, IEventDocument } from "../schemas/Event.schema.js";
-import { TicketCategoryModel, ITicketCategoryDocument } from "../schemas/TicketCategory.schema.js";
+import { eq, and } from "drizzle-orm";
+import { db } from "../db/index.js";
+import { events, ticketCategories, Event, TicketCategory } from "../db/schema.js";
 import { EventStatus } from "../models/enum.js";
 
-// Custom error classes
-export class ValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ValidationError";
-  }
-}
+export class ValidationError extends Error { constructor(m: string) { super(m); this.name = "ValidationError"; } }
+export class NotFoundError   extends Error { constructor(m: string) { super(m); this.name = "NotFoundError"; } }
+export class ForbiddenError  extends Error { constructor(m: string) { super(m); this.name = "ForbiddenError"; } }
 
-export class NotFoundError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "NotFoundError";
-  }
-}
-
-export class ForbiddenError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ForbiddenError";
-  }
-}
+export type EventWithCategories = Event & { ticketCategories: TicketCategory[] };
 
 interface TicketCategoryInput {
-  title: string;
-  price: number;
-  type: string;
-  totalSeats: number;
+  title: string; price: number; type: string; totalSeats: number;
 }
 
 export class EventService {
-  /**
-   * Create event with optional ticket categories
-   */
   static async createEvent(
-    title: string,
-    description: string,
-    date: string | Date,
-    location: string,
-    organizerId: string,
-    ticketCategories?: TicketCategoryInput[]
-  ): Promise<IEventDocument> {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    title: string, description: string, date: string | Date,
+    location: string, organizerId: string,
+    ticketCats?: TicketCategoryInput[]
+  ): Promise<EventWithCategories> {
+    const eventDate = typeof date === "string" ? new Date(date) : date;
 
-    try {
-      const eventDate = typeof date === "string" ? new Date(date) : date;
+    const [event] = await db
+      .insert(events)
+      .values({ title, description, location, status: "draft", date: eventDate, organizerId })
+      .returning();
 
-      // Create event
-      const event = await EventModel.create(
-        [
-          {
-            title,
-            description,
-            location,
-            status: EventStatus.DRAFT,
-            date: eventDate,
-            organizerId: new mongoose.Types.ObjectId(organizerId),
-            ticketCategories: [],
-          },
-        ],
-        { session }
-      );
-
-      // Create ticket categories if provided
-      if (ticketCategories && Array.isArray(ticketCategories) && ticketCategories.length > 0) {
-        const categoryDocs = await TicketCategoryModel.create(
-          ticketCategories.map((cat) => ({
-            title: cat.title,
-            price: cat.price,
-            type: cat.type,
-            totalSeats: cat.totalSeats,
-            availableSeats: cat.totalSeats,
-            reservedSeats: 0,
-            eventId: event[0]._id,
-          })),
-          { session }
-        );
-
-        // Update event with ticket category IDs
-        event[0].ticketCategories = categoryDocs.map((cat) => cat._id as mongoose.Types.ObjectId);
-        await event[0].save({ session });
-      }
-
-      await session.commitTransaction();
-      return event[0];
-    } catch (error) {
-      await session.abortTransaction();
-      throw error;
-    } finally {
-      session.endSession();
-    }
-  }
-
-  /**
-   * Get all published events
-   */
-  static async getAllEvents(): Promise<IEventDocument[]> {
-    const events = await EventModel.find({ status: EventStatus.PUBLISHED })
-      .populate("ticketCategories")
-      .sort({ date: 1 });
-
-    return events;
-  }
-
-  /**
-   * Get event by ID
-   */
-  static async getEventById(eventId: string): Promise<IEventDocument> {
-    const event = await EventModel.findById(eventId)
-      .populate("ticketCategories")
-      .populate("organizerId");
-
-    if (!event) {
-      throw new NotFoundError("Event not found");
+    let cats: TicketCategory[] = [];
+    if (ticketCats && Array.isArray(ticketCats) && ticketCats.length > 0) {
+      cats = await db
+        .insert(ticketCategories)
+        .values(ticketCats.map((c) => ({
+          eventId: event.id,
+          title: c.title,
+          price: String(c.price),
+          type: c.type,
+          totalSeats: c.totalSeats,
+          availableSeats: c.totalSeats,
+          reservedSeats: 0,
+        })))
+        .returning();
     }
 
-    return event;
+    return { ...event, ticketCategories: cats };
   }
 
-  /**
-   * Update event
-   */
+  static async getAllEvents(): Promise<EventWithCategories[]> {
+    const evts = await db
+      .select()
+      .from(events)
+      .where(eq(events.status, "published"))
+      .orderBy(events.date);
+
+    return Promise.all(evts.map((e) => this.attachCategories(e)));
+  }
+
+  static async getEventById(eventId: string): Promise<EventWithCategories> {
+    const [event] = await db.select().from(events).where(eq(events.id, eventId)).limit(1);
+    if (!event) throw new NotFoundError("Event not found");
+    return this.attachCategories(event);
+  }
+
   static async updateEvent(
-    eventId: string,
-    organizerId: string,
-    updates: {
-      title?: string;
-      description?: string;
-      date?: string | Date;
-      location?: string;
-      status?: EventStatus;
-    }
-  ): Promise<IEventDocument> {
-    const event = await EventModel.findById(eventId);
+    eventId: string, organizerId: string,
+    updates: { title?: string; description?: string; date?: string | Date; location?: string; status?: EventStatus }
+  ): Promise<EventWithCategories> {
+    const [event] = await db.select().from(events).where(eq(events.id, eventId)).limit(1);
+    if (!event) throw new NotFoundError("Event not found");
+    if (event.organizerId !== organizerId) throw new ForbiddenError("Not authorized");
 
-    if (!event) {
-      throw new NotFoundError("Event not found");
-    }
+    const patch: Partial<typeof events.$inferInsert> = {};
+    if (updates.title)       patch.title       = updates.title;
+    if (updates.description) patch.description = updates.description;
+    if (updates.location)    patch.location    = updates.location;
+    if (updates.status)      patch.status      = updates.status;
+    if (updates.date)        patch.date        = typeof updates.date === "string" ? new Date(updates.date) : updates.date;
 
-    // Check authorization
-    if (event.organizerId.toString() !== organizerId) {
-      throw new ForbiddenError("You are not authorized to update this event");
-    }
-
-    // Apply updates
-    if (updates.title) event.title = updates.title;
-    if (updates.description) event.description = updates.description;
-    if (updates.location) event.location = updates.location;
-    if (updates.status) event.status = updates.status;
-    if (updates.date) {
-      event.date = typeof updates.date === "string" ? new Date(updates.date) : updates.date;
-    }
-
-    await event.save();
-    return event;
+    const [updated] = await db.update(events).set(patch).where(eq(events.id, eventId)).returning();
+    return this.attachCategories(updated);
   }
 
-  /**
-   * Delete event
-   */
   static async deleteEvent(eventId: string, organizerId: string): Promise<void> {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-      const event = await EventModel.findById(eventId).session(session);
-
-      if (!event) {
-        throw new NotFoundError("Event not found");
-      }
-
-      // Check authorization
-      if (event.organizerId.toString() !== organizerId) {
-        throw new ForbiddenError("You are not authorized to delete this event");
-      }
-
-      // Delete associated ticket categories
-      await TicketCategoryModel.deleteMany(
-        { eventId: event._id },
-        { session }
-      );
-
-      // Delete event
-      await EventModel.findByIdAndDelete(eventId, { session });
-
-      await session.commitTransaction();
-    } catch (error) {
-      await session.abortTransaction();
-      throw error;
-    } finally {
-      session.endSession();
-    }
+    const [event] = await db.select().from(events).where(eq(events.id, eventId)).limit(1);
+    if (!event) throw new NotFoundError("Event not found");
+    if (event.organizerId !== organizerId) throw new ForbiddenError("Not authorized");
+    // ticket_categories cascade delete via FK
+    await db.delete(events).where(eq(events.id, eventId));
   }
 
-  /**
-   * Publish event (make it visible to customers)
-   */
-  static async publishEvent(eventId: string, organizerId: string): Promise<IEventDocument> {
-    const event = await EventModel.findById(eventId);
-
-    if (!event) {
-      throw new NotFoundError("Event not found");
-    }
-
-    if (event.organizerId.toString() !== organizerId) {
-      throw new ForbiddenError("You are not authorized to publish this event");
-    }
-
-    event.status = EventStatus.PUBLISHED;
-    await event.save();
-
-    return event;
+  static async publishEvent(eventId: string, organizerId: string): Promise<EventWithCategories> {
+    const [event] = await db.select().from(events).where(eq(events.id, eventId)).limit(1);
+    if (!event) throw new NotFoundError("Event not found");
+    if (event.organizerId !== organizerId) throw new ForbiddenError("Not authorized");
+    const [updated] = await db.update(events).set({ status: "published" }).where(eq(events.id, eventId)).returning();
+    return this.attachCategories(updated);
   }
 
-  /**
-   * Add ticket category to existing event
-   */
   static async addTicketCategory(
-    eventId: string,
-    organizerId: string,
-    categoryData: TicketCategoryInput
-  ): Promise<ITicketCategoryDocument> {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    eventId: string, organizerId: string, data: TicketCategoryInput
+  ): Promise<TicketCategory> {
+    const [event] = await db.select().from(events).where(eq(events.id, eventId)).limit(1);
+    if (!event) throw new NotFoundError("Event not found");
+    if (event.organizerId !== organizerId) throw new ForbiddenError("Not authorized");
 
-    try {
-      const event = await EventModel.findById(eventId).session(session);
-
-      if (!event) {
-        throw new NotFoundError("Event not found");
-      }
-
-      if (event.organizerId.toString() !== organizerId) {
-        throw new ForbiddenError("You are not authorized to modify this event");
-      }
-
-      // Create ticket category
-      const category = await TicketCategoryModel.create(
-        [
-          {
-            title: categoryData.title,
-            price: categoryData.price,
-            type: categoryData.type,
-            totalSeats: categoryData.totalSeats,
-            availableSeats: categoryData.totalSeats,
-            reservedSeats: 0,
-            eventId: event._id,
-          },
-        ],
-        { session }
-      );
-
-      // Add to event's ticket categories
-      event.ticketCategories.push(category[0]._id as mongoose.Types.ObjectId);
-      await event.save({ session });
-
-      await session.commitTransaction();
-      return category[0];
-    } catch (error) {
-      await session.abortTransaction();
-      throw error;
-    } finally {
-      session.endSession();
-    }
+    const [cat] = await db
+      .insert(ticketCategories)
+      .values({
+        eventId, title: data.title, price: String(data.price),
+        type: data.type, totalSeats: data.totalSeats,
+        availableSeats: data.totalSeats, reservedSeats: 0,
+      })
+      .returning();
+    return cat;
   }
 
-  /**
-   * Get organizer's events
-   */
-  static async getOrganizerEvents(organizerId: string): Promise<IEventDocument[]> {
-    const events = await EventModel.find({
-      organizerId: new mongoose.Types.ObjectId(organizerId),
-    })
-      .populate("ticketCategories")
-      .sort({ createdAt: -1 });
+  static async getOrganizerEvents(organizerId: string): Promise<EventWithCategories[]> {
+    const evts = await db
+      .select()
+      .from(events)
+      .where(eq(events.organizerId, organizerId))
+      .orderBy(events.createdAt);
 
-    return events;
+    return Promise.all(evts.map((e) => this.attachCategories(e)));
+  }
+
+  private static async attachCategories(event: Event): Promise<EventWithCategories> {
+    const cats = await db
+      .select()
+      .from(ticketCategories)
+      .where(eq(ticketCategories.eventId, event.id));
+    return { ...event, ticketCategories: cats };
   }
 }

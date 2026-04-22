@@ -1,21 +1,13 @@
-import mongoose from "mongoose";
-import { env } from "./env.js";
+import { db } from "../db/index.js";
+import { sql } from "drizzle-orm";
 
 export const connectDatabase = async (): Promise<void> => {
   try {
-    await mongoose.connect(env.mongoUri);
-    console.log(" MongoDB connected successfully");
+    // Test connection with a simple query
+    await db.execute(sql`SELECT 1`);
+    console.log("Neon PostgreSQL connected successfully");
   } catch (error) {
-    console.error(" MongoDB connection error:", error);
+    console.error("Neon DB connection error:", error);
     process.exit(1);
   }
 };
-
-// Handle connection events
-mongoose.connection.on("disconnected", () => {
-  console.log("MongoDB disconnected");
-});
-
-mongoose.connection.on("error", (error) => {
-  console.error("MongoDB error:", error);
-});
