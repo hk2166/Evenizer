@@ -9,12 +9,13 @@ export default function Navbar() {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
 
-  const isHome = location.pathname === "/";
+  const path = location.pathname;
+  const isLanding    = path === "/";
+  const isSuperAdmin = path === "/super-admin";
+  const isAuthPage   = path === "/login" || path === "/register";
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -24,16 +25,47 @@ export default function Navbar() {
     navigate("/login");
   };
 
-  // Landing page and super-admin have their own headers
-  if (isHome || location.pathname === "/super-admin") return null;
+  // Landing and super-admin have their own headers
+  if (isLanding || isSuperAdmin) return null;
 
+  // ── Neo-Brutalist nav for Login / Register ──────────────
+  if (isAuthPage) {
+    return (
+      <header className="nb-nav">
+        <div className="nb-nav-inner">
+          <button className="nb-logo" onClick={() => navigate("/")}>
+            <div className="nb-logo-box">⚡</div>
+            <span>EventHub</span>
+          </button>
+          <nav className="nb-nav-links">
+            <a href="/#featured" onClick={(e) => { e.preventDefault(); navigate("/"); }}>Browse Events</a>
+            <a href="/#categories" onClick={(e) => { e.preventDefault(); navigate("/"); }}>Categories</a>
+          </nav>
+          <div className="nb-nav-right">
+            {path === "/login" ? (
+              <>
+                <span className="nb-nav-hint">No account?</span>
+                <button className="nb-btn-black" onClick={() => navigate("/register")}>Sign Up Free →</button>
+              </>
+            ) : (
+              <>
+                <span className="nb-nav-hint">Have an account?</span>
+                <button className="nb-btn-outline" onClick={() => navigate("/login")}>Sign In</button>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+    );
+  }
+
+  // ── Standard nav for all other pages ───────────────────
   return (
-    <nav className={`navbar ${scrolled ? "scrolled" : ""} ${isHome ? "navbar-light" : ""}`}>
+    <nav className={`navbar ${scrolled ? "scrolled" : ""}`}>
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
           EventHub
         </Link>
-
         <div className="navbar-menu">
           {user ? (
             <>
@@ -50,14 +82,12 @@ export default function Navbar() {
                 </>
               )}
               {user.role === "admin" && (
-                <Link to="/admin" className="navbar-link">Admin</Link>
+                <Link to="/super-admin" className="navbar-link">Admin</Link>
               )}
               <div className="navbar-avatar" title={user.name}>
                 {user.name?.charAt(0).toUpperCase()}
               </div>
-              <button onClick={handleLogout} className="navbar-btn">
-                Logout
-              </button>
+              <button onClick={handleLogout} className="navbar-btn">Logout</button>
             </>
           ) : (
             <>

@@ -42,38 +42,25 @@ export default function Register() {
 
   return (
     <div className="auth-page">
-      {/* ── LEFT PANEL ── */}
       <div className="auth-left-panel">
-        <div className="auth-logo">
-          <div className="auth-logo-icon"></div>
-          EventHub
-        </div>
+        
+          
+          
+        
         <h1 className="auth-hero-text">
-          Discover, book,<br />
-          and manage<br />
+          Discover,<br />
+          book &amp; manage<br />
           events<br />
-          seamlessly.
+          <span style={{ WebkitTextStroke: "2px #000", color: "transparent" }}>instantly.</span>
         </h1>
         <p className="auth-subhero-text">
-          Join thousands of organizers and attendees.<br />
-          Experience the most secure and intuitive ticketing<br />
+          Join thousands of organizers and attendees.
+          Experience the most secure and intuitive ticketing
           platform built for the modern era.
         </p>
 
-        <div className="auth-stats">
-          <div className="stat-item">
-            <span className="stat-number">10K+</span>
-            <span className="stat-label">Active Organizers</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">2M+</span>
-            <span className="stat-label">Tickets Sold</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">✓</span>
-            <span className="stat-label">Trusted by professionals<br />Global event leaders</span>
-          </div>
-        </div>
+        
+        
       </div>
 
       {/* ── RIGHT PANEL ── */}
@@ -95,7 +82,7 @@ export default function Register() {
                 className={`role-card ${role === "customer" ? "role-card-active" : ""}`}
                 onClick={() => setRole("customer")}
               >
-                <span className="role-card-icon"></span>
+                
                 <span className="role-card-title">Customer</span>
                 <span className="role-card-desc">Browse & book tickets for events</span>
               </button>
@@ -104,7 +91,7 @@ export default function Register() {
                 className={`role-card ${role === "organizer" ? "role-card-active" : ""}`}
                 onClick={() => setRole("organizer")}
               >
-                <span className="role-card-icon"></span>
+                
                 <span className="role-card-title">Organizer</span>
                 <span className="role-card-desc">Create & manage your events</span>
               </button>

@@ -26,7 +26,21 @@ export default function Login() {
 
     try {
       await login(email, password);
-      navigate("/");
+      // Route based on actual role returned from backend
+      const stored = localStorage.getItem("token");
+      if (stored) {
+        // Decode role from JWT payload (base64)
+        try {
+          const payload = JSON.parse(atob(stored.split(".")[1]));
+          if (payload.role === "admin") navigate("/super-admin");
+          else if (payload.role === "organizer") navigate("/my-events");
+          else navigate("/dashboard");
+        } catch {
+          navigate("/");
+        }
+      } else {
+        navigate("/");
+      }
     } catch (error: unknown) {
       const message = axios.isAxiosError<{ message?: string }>(error)
         ? error.response?.data?.message
@@ -51,7 +65,19 @@ export default function Login() {
 
     try {
       await googleLogin(credentialResponse.credential);
-      navigate("/");
+      const stored = localStorage.getItem("token");
+      if (stored) {
+        try {
+          const payload = JSON.parse(atob(stored.split(".")[1]));
+          if (payload.role === "admin") navigate("/super-admin");
+          else if (payload.role === "organizer") navigate("/my-events");
+          else navigate("/dashboard");
+        } catch {
+          navigate("/");
+        }
+      } else {
+        navigate("/");
+      }
     } catch (error: unknown) {
       const message = axios.isAxiosError<{ message?: string }>(error)
         ? error.response?.data?.message
@@ -78,23 +104,18 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-left-panel">
         <div className="auth-logo">
-          <div className="auth-logo-icon"></div>
+          <div className="auth-logo-icon">⚡</div>
           EventHub
         </div>
         <h1 className="auth-hero-text">
-          Discover, book,
-          <br />
-          and manage
-          <br />
-          events
-          <br />
-          seamlessly.
+          Discover,<br />
+          book &amp; manage<br />
+          events<br />
+          <span style={{ WebkitTextStroke: "2px #000", color: "transparent" }}>instantly.</span>
         </h1>
         <p className="auth-subhero-text">
           Join thousands of organizers and attendees.
-          <br />
           Experience the most secure and intuitive ticketing
-          <br />
           platform built for the modern era.
         </p>
       </div>
@@ -110,23 +131,29 @@ export default function Login() {
               className={`login-tab ${loginType === "customer" ? "active" : ""}`}
               onClick={() => setLoginType("customer")}
             >
-              Customer
+               Customer
             </button>
             <button
               type="button"
               className={`login-tab ${loginType === "organizer" ? "active" : ""}`}
               onClick={() => setLoginType("organizer")}
             >
-              Organizer
+               Organizer
             </button>
             <button
               type="button"
-              className={`login-tab ${loginType === "admin" ? "active" : ""}`}
+              className={`login-tab login-tab-admin ${loginType === "admin" ? "active-admin" : ""}`}
               onClick={() => setLoginType("admin")}
             >
-              Admin
+               Admin
             </button>
           </div>
+
+          {loginType === "admin" && (
+            <div className="admin-hint">
+              Admin access only. Unauthorized attempts are logged.
+            </div>
+          )}
 
           {error && <div className="error-message">{error}</div>}
 
