@@ -8,7 +8,8 @@ export interface User {
 }
 
 export interface TicketCategory {
-  _id: string;
+  id?: string;
+  _id?: string;
   title: string;
   price: number;
   type: string;
@@ -19,7 +20,7 @@ export interface TicketCategory {
 }
 
 export interface Event {
-  id: string;
+  id?: string;
   _id?: string;
   title: string;
   description: string;
@@ -27,6 +28,7 @@ export interface Event {
   date: string;
   status: "draft" | "published" | "cancelled";
   organizerId: string;
+  imageUrl?: string;
   ticketCategories?: TicketCategory[];
 }
 
@@ -40,7 +42,8 @@ export type BookingStatus =
 export type PaymentMethod = "card" | "paypal" | "upi";
 
 export interface Booking {
-  _id: string;
+  id?: string;
+  _id?: string;
   customerId: string;
   eventId: string | Event;
   ticketCategoryId: string | TicketCategory;
@@ -56,7 +59,8 @@ export interface Booking {
 }
 
 export interface Payment {
-  _id: string;
+  id: string;
+  _id?: string;
   bookingId: string;
   amount: number;
   paymentMethod: PaymentMethod;
@@ -69,6 +73,10 @@ export interface AuthResponse {
   message: string;
   token: string;
   user: User;
+}
+
+export interface GoogleLoginData {
+  credential: string;
 }
 
 export interface LoginCredentials {
@@ -95,4 +103,40 @@ export interface CreateEventData {
     type: string;
     totalSeats: number;
   }[];
+}
+
+export interface AdminDashboardMetricData {
+  grossSalesVolume: number;
+  grossSalesChangePct: number;
+  ticketsProcessed: number;
+  ticketsChangePct: number;
+  activeEvents: number;
+  activeEventsChangePct: number;
+  totalRegisteredUsers: number;
+  newSignupsChangePct: number;
+}
+
+export interface AdminDashboardChartPoint {
+  day: string;
+  users: number;
+  tickets: number;
+}
+
+export interface AdminDashboardActivity {
+  kind: "user" | "event" | "ticket";
+  title: string;
+  text: string;
+  time: string;
+}
+
+export interface AdminDashboardData {
+  metrics: AdminDashboardMetricData;
+  chart: AdminDashboardChartPoint[];
+  activities: AdminDashboardActivity[];
+  generatedAt: string;
+}
+
+export interface AdminDashboardResponse {
+  message: string;
+  dashboard: AdminDashboardData;
 }

@@ -1,9 +1,11 @@
 // frontend/src/services/api.ts
 import axios from "axios";
 import type {
+  AdminDashboardResponse,
   LoginCredentials,
   RegisterData,
   AuthResponse,
+  GoogleLoginData,
   Event,
   CreateEventData,
   Booking,
@@ -12,7 +14,7 @@ import type {
   BookingStatus,
 } from "../types";
 
-const API_URL = "http://localhost:4000";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -42,6 +44,11 @@ export const authAPI = {
     return data;
   },
 
+  googleLogin: async (payload: GoogleLoginData): Promise<AuthResponse> => {
+    const { data } = await api.post("/auth/google", payload);
+    return data;
+  },
+
   getCurrentUser: async () => {
     const { data } = await api.get("/auth/me");
     return data;
@@ -67,7 +74,7 @@ export const eventsAPI = {
 
   update: async (
     id: string,
-    eventData: Partial<Event>
+    eventData: Partial<Event>,
   ): Promise<{ event: Event }> => {
     const { data } = await api.put(`/events/${id}`, eventData);
     return data;
@@ -83,7 +90,7 @@ export const eventsAPI = {
   },
 
   getOrganizerEvents: async (
-    organizerId: string
+    organizerId: string,
   ): Promise<{ events: Event[] }> => {
     const { data } = await api.get(`/events/organizer/${organizerId}`);
     return data;
@@ -97,7 +104,7 @@ export const eventAPI = {
   },
 
   getOrganizerEvents: async (
-    organizerId: string
+    organizerId: string,
   ): Promise<{ events: Event[] }> => {
     const { data } = await api.get(`/events/organizer/${organizerId}`);
     return data;
@@ -119,7 +126,7 @@ export const bookingAPI = {
   createBooking: async (
     eventId: string,
     ticketCategoryId: string,
-    quantity: number
+    quantity: number,
   ): Promise<{ booking: Booking }> => {
     const { data } = await api.post("/bookings", {
       eventId,
@@ -131,7 +138,7 @@ export const bookingAPI = {
 
   processPayment: async (
     bookingId: string,
-    paymentMethod: PaymentMethod
+    paymentMethod: PaymentMethod,
   ): Promise<{ booking: Booking; payment: Payment }> => {
     const { data } = await api.post(`/bookings/${bookingId}/payment`, {
       paymentMethod,
@@ -146,26 +153,31 @@ export const bookingAPI = {
 
   getCustomerBookings: async (
     customerId: string,
-    status?: BookingStatus
+    status?: BookingStatus,
   ): Promise<{ bookings: Booking[]; count: number }> => {
     const params = status ? `?status=${status}` : "";
     const { data } = await api.get(`/bookings/customer/${customerId}${params}`);
     return data;
   },
 
-  getBookingById: async (
-    bookingId: string
-  ): Promise<{ booking: Booking }> => {
+  getBookingById: async (bookingId: string): Promise<{ booking: Booking }> => {
     const { data } = await api.get(`/bookings/${bookingId}`);
     return data;
   },
 
   getEventBookings: async (
     eventId: string,
-    status?: BookingStatus
+    status?: BookingStatus,
   ): Promise<{ bookings: Booking[]; count: number }> => {
     const params = status ? `?status=${status}` : "";
     const { data } = await api.get(`/bookings/event/${eventId}${params}`);
+    return data;
+  },
+};
+
+export const adminAPI = {
+  getDashboard: async (): Promise<AdminDashboardResponse> => {
+    const { data } = await api.get("/admin/dashboard");
     return data;
   },
 };
